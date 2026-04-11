@@ -17,7 +17,7 @@ Go to **Settings → Secrets and variables → Actions → New repository secret
 | `FIREBASE_SENDER_ID` | Messaging sender ID |
 | `FIREBASE_APP_ID` | Firebase app ID |
 
-### 2. Enable GitHub Pages
+### 2. Enable GitHub Pages 
 Go to **Settings → Pages → Source → GitHub Actions**
 
 ### 3. Push to main
