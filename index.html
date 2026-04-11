@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finance">
+<meta name="theme-color" content="#c8a84b">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Mrsonic Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0a; --surface:#111111; --surface2:#181818;
+  --border:#2a2a2a; --border2:#333333;
+  --text:#f0f0f0; --text2:#888888; --text3:#555555;
+  --gold:#c8a84b; --gold-dim:#7a622b;
+  --green:#3dba78; --red:#e05555; --blue:#5b9bd5;
+  --radius:12px; --radius-sm:8px;
+}
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
+
+#loading-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:14px; }
+.spinner { width:30px; height:30px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
+@keyframes spin { to{transform:rotate(360deg);} }
+
+#login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px 16px; }
+.login-box { width:100%; max-width:360px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:30px 26px; }
+.login-logo { font-size:34px; text-align:center; margin-bottom:8px; }
+.login-title { font-size:22px; font-weight:700; letter-spacing:-0.03em; text-align:center; margin-bottom:4px; }
+.login-title span { color:var(--gold); }
+.login-sub { font-size:12px; color:var(--text3); text-align:center; margin-bottom:22px; }
+.login-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:20px; }
+.login-tab { flex:1; padding:9px; text-align:center; font-size:13px; font-weight:600; font-family:'Syne',sans-serif; cursor:pointer; background:none; border:none; color:var(--text3); transition:all 0.15s; }
+.login-tab.active { background:var(--gold); color:#000; }
+.lf { margin-bottom:12px; }
+.lf label { display:block; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px; }
+.lf input { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:14px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; }
+.lf input:focus { border-color:var(--gold); }
+.btn-auth { width:100%; background:var(--gold); color:#000; border:none; padding:11px; border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; margin-top:4px; }
+.btn-auth:hover { opacity:0.9; }
+.login-err { font-size:12px; color:var(--red); text-align:center; margin-top:10px; min-height:16px; }
+.forgot-link { text-align:center; margin-top:10px; font-size:12px; color:var(--text3); cursor:pointer; text-decoration:underline; }
+.login-note { font-size:11px; color:var(--text3); text-align:center; margin-top:16px; }
+
+#app-screen { display:none; }
+.header { background:var(--surface); border-bottom:1px solid var(--border); padding:13px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; }
+.header-title { font-size:17px; font-weight:700; letter-spacing:-0.02em; }
+.header-title span { color:var(--gold); }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); margin-left:8px; transition:background 0.3s; }
+.sync-dot.synced { background:var(--green); }
+.sync-dot.syncing { background:var(--gold); animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.header-right { display:flex; align-items:center; gap:8px; }
+.user-info { font-size:11px; color:var(--text3); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.btn-signout { background:none; border:1px solid var(--border); color:var(--text3); padding:5px 11px; border-radius:var(--radius-sm); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; transition:all 0.15s; }
+.btn-signout:hover { border-color:var(--red); color:var(--red); }
+
+.networth-banner { margin:14px 14px 0; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; }
+.networth-banner::before { content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; background:radial-gradient(circle,rgba(200,168,75,0.07) 0%,transparent 70%); border-radius:50%; }
+.nw-label { font-size:10px; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
+.nw-value { font-size:30px; font-weight:700; letter-spacing:-0.03em; font-family:'DM Mono',monospace; color:var(--gold); }
+.nw-sub { display:flex; gap:16px; margin-top:12px; flex-wrap:wrap; }
+.nw-sub-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
+.nw-sub-val { font-size:14px; font-weight:600; font-family:'DM Mono',monospace; margin-top:2px; }
+.nw-sub-val.green { color:var(--green); }
+.nw-sub-val.blue { color:var(--blue); }
+.nw-sub-val.gold { color:var(--gold); }
+
+.section-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 14px 0; }
+.account-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; }
+.card-icon { font-size:14px; margin-bottom:5px; }
+.card-name { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+.card-amount { font-size:18px; font-weight:600; font-family:'DM Mono',monospace; }
+.card-amount.negative { color:var(--red); }
+.card-note { font-size:10px; color:var(--text3); margin-top:3px; }
+.gold-note { background:rgba(200,168,75,0.06); border:1px solid rgba(200,168,75,0.18); border-radius:var(--radius-sm); padding:8px 11px; font-size:10px; color:var(--gold-dim); margin-top:8px; line-height:1.5; }
+
+.udhari-card { grid-column:1/-1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; }
+.udhari-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.udhari-title { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
+.udhari-total { font-size:16px; font-weight:600; font-family:'DM Mono',monospace; color:var(--green); }
+.udhari-rows { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
+.udhari-row { display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:var(--surface2); border-radius:6px; }
+.udhari-person { font-size:13px; }
+.udhari-amt { font-size:13px; font-family:'DM Mono',monospace; font-weight:500; }
+.udhari-amt.plus { color:var(--green); }
+.udhari-amt.minus { color:var(--red); }
+.udhari-add-row { display:flex; gap:6px; flex-wrap:wrap; }
+.u-inp { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-size:12px; outline:none; }
+.u-inp:focus { border-color:var(--gold); }
+
+.add-section { margin:10px 14px 0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+.add-header { padding:13px 15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+.add-header-title { font-size:13px; font-weight:600; }
+.add-toggle { font-size:20px; color:var(--text3); transition:transform 0.2s; line-height:1; }
+.add-toggle.open { transform:rotate(45deg); }
+.add-body { padding:14px 15px; display:none; }
+.add-body.open { display:block; }
+.field-row { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+.field { flex:1; min-width:100px; }
+.field label { display:block; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px; }
+.field input, .field select { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:9px 11px; border-radius:var(--radius-sm); font-size:13px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; -webkit-appearance:none; }
+.field input:focus, .field select:focus { border-color:var(--gold); }
+.quick-btns { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
+.quick-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text2); padding:5px 10px; border-radius:20px; font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; transition:all 0.15s; }
+.quick-btn:hover { border-color:var(--gold); color:var(--gold); }
+.btn-submit { width:100%; background:var(--gold); color:#000; border:none; padding:11px; border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; }
+.btn-submit:hover { opacity:0.9; }
+.btn-submit:active { transform:scale(0.99); }
+
+.history-section { margin:10px 14px 0; }
+.history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.history-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
+.btn-clear { background:none; border:none; color:var(--text3); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; }
+.btn-clear:hover { color:var(--red); }
+.tx-list { display:flex; flex-direction:column; gap:5px; }
+.tx-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px; display:flex; justify-content:space-between; align-items:center; animation:slideIn 0.2s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+.tx-left { flex:1; }
+.tx-desc { font-size:13px; font-weight:500; margin-bottom:2px; }
+.tx-meta { font-size:10px; color:var(--text3); }
+.tx-right { display:flex; align-items:center; gap:8px; }
+.tx-amount { font-size:14px; font-weight:600; font-family:'DM Mono',monospace; }
+.tx-amount.expense { color:var(--red); }
+.tx-amount.income { color:var(--green); }
+.tx-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:2px 4px; border-radius:4px; }
+.tx-del:hover { color:var(--red); }
+.empty { text-align:center; padding:22px; color:var(--text3); font-size:12px; }
+
+.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:10px 20px; border-radius:30px; font-size:13px; opacity:0; transition:all 0.3s; z-index:999; white-space:nowrap; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+@media(max-width:380px) { .section-grid{grid-template-columns:1fr;} .nw-value{font-size:26px;} }
+</style>
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="spinner"></div>
+  <div style="font-size:13px;color:var(--text3);" id="loading-msg">Connecting…</div>
+  <div id="loading-retry" style="display:none;margin-top:12px;text-align:center;">
+    <div style="font-size:12px;color:var(--red);margin-bottom:10px;">Could not connect. Check your internet.</div>
+    <button onclick="location.reload()" style="background:var(--gold);color:#000;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">Retry</button>
+  </div>
+</div>
+
+<div id="login-screen" style="display:none;">
+  <div class="login-box">
+    <div class="login-logo">💰</div>
+    <div class="login-title">Mrsonic <span>Finance</span></div>
+    <div class="login-sub">Personal cashbook — synced everywhere</div>
+    <div class="login-tabs">
+      <button class="login-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+      <button class="login-tab" id="tab-reg" onclick="switchTab('reg')">Register</button>
+    </div>
+
+    <div id="form-login">
+      <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn-auth" onclick="doLogin()">Sign In</button>
+      <div class="forgot-link" onclick="doForgot()">Forgot password?</div>
+    </div>
+
+    <div id="form-reg" style="display:none;">
+      <div class="lf"><label>Email</label><input type="email" id="r-email" placeholder="you@email.com"></div>
+      <div class="lf"><label>Password (min 6 chars)</label><input type="password" id="r-pass" placeholder="••••••••"></div>
+      <div class="lf"><label>Confirm Password</label><input type="password" id="r-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <button class="btn-auth" onclick="doRegister()">Create Account</button>
+    </div>
+
+    <div class="login-err" id="login-err"></div>
+    <div class="login-note">Data stored privately in Firebase · Open from any device</div>
+  </div>
+</div>
+
+<div id="app-screen">
+  <div class="header">
+    <div style="display:flex;align-items:center;">
+      <div class="header-title">Mrsonic <span>Finance</span></div>
+      <div class="sync-dot" id="sync-dot"></div>
+    </div>
+    <div class="header-right">
+      <div class="user-info" id="user-info"></div>
+      <button class="btn-signout" onclick="doSignOut()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="networth-banner">
+    <div class="nw-label">Total Networth</div>
+    <div class="nw-value" id="nw-total">₹0.00</div>
+    <div class="nw-sub">
+      <div><div class="nw-sub-label">Available Cash</div><div class="nw-sub-val green" id="nw-cash">₹0.00</div></div>
+      <div><div class="nw-sub-label">Udhari</div><div class="nw-sub-val blue" id="nw-udhari">₹0.00</div></div>
+      <div><div class="nw-sub-label">Investments</div><div class="nw-sub-val gold" id="nw-invest">₹0.00</div></div>
+    </div>
+  </div>
+
+  <div class="section-grid">
+    <div class="account-card"><div class="card-icon">💵</div><div class="card-name">Fam Account</div><div class="card-amount" id="amt-fam">₹0.00</div></div>
+    <div class="account-card"><div class="card-icon">💵</div><div class="card-name">Cash in Hand</div><div class="card-amount" id="amt-cash">₹0.00</div></div>
+    <div class="account-card"><div class="card-icon">🏦</div><div class="card-name">Bank · CBI</div><div class="card-amount" id="amt-bank">₹0.00</div><div class="card-note">A/C ending 8466</div></div>
+    <div class="account-card"><div class="card-icon">🧯</div><div class="card-name">Emergency Fund</div><div class="card-amount" id="amt-emergency">₹0.00</div></div>
+    <div class="account-card" style="grid-column:1/-1;">
+      <div class="card-icon">⛏️</div><div class="card-name">Investments</div>
+      <div class="card-amount" id="amt-invest">₹0.00</div>
+      <div class="card-note">DigiGold (Fam + Jar) · Lenden · PhonePay Gold</div>
+      <div class="gold-note">⚠ Withdraw DigiGold only when profit > ₹178.95 to cover taxes</div>
+    </div>
+    <div class="udhari-card">
+      <div class="udhari-header">
+        <div class="udhari-title">🧃 Udhari (given out)</div>
+        <div class="udhari-total" id="udhari-net">₹0.00</div>
+      </div>
+      <div class="udhari-rows" id="udhari-list"></div>
+      <div class="udhari-add-row">
+        <input class="u-inp" type="text" id="u-name" placeholder="Person name" style="flex:1;min-width:90px;">
+        <input class="u-inp" type="number" id="u-amt" placeholder="₹ Amt" style="width:85px;">
+        <select class="u-inp" id="u-type"><option value="given">Given</option><option value="owed">I Owe</option></select>
+        <button onclick="addUdhari()" style="background:var(--gold);color:#000;border:none;padding:8px 13px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;">+</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="add-section">
+    <div class="add-header" onclick="toggleAdd()">
+      <div class="add-header-title">+ Add Transaction</div>
+      <div class="add-toggle" id="add-toggle">+</div>
+    </div>
+    <div class="add-body" id="add-body">
+      <div class="field-row">
+        <div class="field" style="flex:0.65;"><label>Type</label>
+          <select id="f-type" onchange="onTypeChange()">
+            <option value="expense">Expense 💸</option>
+            <option value="income">Income 💰</option>
+            <option value="transfer">Transfer ↔</option>
+          </select>
+        </div>
+        <div class="field"><label>Account</label>
+          <select id="f-account">
+            <option value="fam">Fam Account</option><option value="cash">Cash</option>
+            <option value="bank">Bank (CBI)</option><option value="emergency">Emergency Fund</option>
+            <option value="invest">Investments</option>
+          </select>
+        </div>
+        <div class="field" id="to-field" style="display:none;"><label>To Account</label>
+          <select id="f-to">
+            <option value="cash">Cash</option><option value="fam">Fam Account</option>
+            <option value="bank">Bank (CBI)</option><option value="emergency">Emergency Fund</option>
+            <option value="invest">Investments</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Biryani, Petrol…"></div>
+        <div class="field" style="flex:0.45;"><label>Amount (₹)</label><input type="number" id="f-amt" placeholder="0" min="0" step="0.01"></div>
+      </div>
+      <div class="quick-btns">
+        <span style="font-size:10px;color:var(--text3);align-self:center;">Quick:</span>
+        <button class="quick-btn" onclick="setQ('Biryani',430)">Biryani ₹430</button>
+        <button class="quick-btn" onclick="setQ('Coconut',60)">Coconut ₹60</button>
+        <button class="quick-btn" onclick="setQ('Shake',50)">Shake ₹50</button>
+        <button class="quick-btn" onclick="setQ('Pizza',130)">Pizza ₹130</button>
+        <button class="quick-btn" onclick="setQ('Auto',30)">Auto ₹30</button>
+      </div>
+      <button class="btn-submit" onclick="addTransaction()">Record Transaction</button>
+    </div>
+  </div>
+
+  <div class="history-section">
+    <div class="history-header">
+      <div class="history-title">Transaction History</div>
+      <button class="btn-clear" onclick="clearHistory()">Clear all</button>
+    </div>
+    <div class="tx-list" id="tx-list"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Register Service Worker for PWA / offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+</script>
+
+<script>
+// Timeout: if Firebase doesn't respond in 8s, show retry screen
+window._fbTimeout = setTimeout(() => {
+  const ls = document.getElementById('loading-screen');
+  if (ls && ls.style.display !== 'none') {
+    document.getElementById('loading-retry').style.display = 'block';
+    document.getElementById('loading-msg').textContent = 'Taking too long…';
+  }
+}, 8000);
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut as fbSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getDatabase, ref, onValue, set, push, remove, update }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// Catch any uncaught module-level errors and show retry screen
+window.addEventListener('error', () => {
+  clearTimeout(window._fbTimeout);
+  document.getElementById('loading-retry').style.display = 'block';
+  document.getElementById('loading-msg').textContent = 'Connection failed.';
+});
+window.addEventListener('unhandledrejection', () => {
+  clearTimeout(window._fbTimeout);
+  document.getElementById('loading-retry').style.display = 'block';
+  document.getElementById('loading-msg').textContent = 'Connection failed.';
+});
+
+const app = initializeApp({
+  apiKey: "%%FIREBASE_API_KEY%%",
+  authDomain: "%%FIREBASE_AUTH_DOMAIN%%",
+  databaseURL: "%%FIREBASE_DB_URL%%",
+  projectId: "%%FIREBASE_PROJECT_ID%%",
+  storageBucket: "%%FIREBASE_PROJECT_ID%%.firebasestorage.app",
+  messagingSenderId: "%%FIREBASE_SENDER_ID%%",
+  appId: "%%FIREBASE_APP_ID%%"
+});
+const auth = getAuth(app);
+const db   = getDatabase(app);
+
+const DEFAULT_ACCOUNTS = { fam:138, cash:50, bank:2152.75, emergency:600, invest:3517.27 };
+const DEFAULT_UDHARI = [
+  {name:'Shivam',amount:1000,type:'given'},{name:'Ammi (keep)',amount:600,type:'given'},
+  {name:'Ammi (pizza)',amount:100,type:'given'},{name:'Aunty',amount:500,type:'given'},
+  {name:'Afsar bhaiya',amount:100,type:'owed'}
+];
+
+let cu = null, accountsRef, udhariRef, txRef;
+let localAcc = {...DEFAULT_ACCOUNTS}, localU = [], localTx = [];
+
+const fmt = n => { const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const syncDot = s => { document.getElementById('sync-dot').className='sync-dot '+s; };
+const setErr  = m => { document.getElementById('login-err').textContent = m; };
+
+function render() {
+  ['fam','cash','bank','emergency','invest'].forEach(k => {
+    const el = document.getElementById('amt-'+k);
+    el.textContent = fmt(localAcc[k]||0);
+    el.classList.toggle('negative',(localAcc[k]||0)<0);
+  });
+  const uNet = localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
+  const a = localAcc;
+  const nw = (a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0)+(a.invest||0)+uNet;
+  document.getElementById('nw-total').textContent   = fmt(nw);
+  document.getElementById('nw-cash').textContent    = fmt((a.fam||0)+(a.cash||0));
+  document.getElementById('nw-udhari').textContent  = fmt(uNet);
+  document.getElementById('nw-invest').textContent  = fmt(a.invest||0);
+  document.getElementById('udhari-net').textContent = fmt(uNet);
+  renderU(); renderTx();
+}
+
+function renderU() {
+  const el = document.getElementById('udhari-list');
+  if (!localU.length) { el.innerHTML='<div class="empty">No entries yet</div>'; return; }
+  el.innerHTML = localU.map(u=>`
+    <div class="udhari-row">
+      <span class="udhari-person">${u.name}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span class="udhari-amt ${u.type==='given'?'plus':'minus'}">${u.type==='given'?'+':'-'}${fmt(u.amount)}</span>
+        <button onclick="window._dU('${u._key}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderTx() {
+  const el = document.getElementById('tx-list');
+  if (!localTx.length) { el.innerHTML='<div class="empty">No transactions yet</div>'; return; }
+  const lb = {fam:'Fam Account',cash:'Cash',bank:'Bank (CBI)',emergency:'Emergency Fund',invest:'Investments'};
+  el.innerHTML = [...localTx].reverse().map(tx => {
+    const iE=tx.type==='expense', iI=tx.type==='income';
+    const sign=iE?'-':iI?'+':'↔', cls=iE?'expense':iI?'income':'';
+    const meta=tx.type==='transfer'?`${lb[tx.account]} → ${lb[tx.toAccount]}`:lb[tx.account];
+    return `<div class="tx-item">
+      <div class="tx-left"><div class="tx-desc">${tx.desc||'—'}</div><div class="tx-meta">${meta} · ${tx.date}</div></div>
+      <div class="tx-right">
+        <span class="tx-amount ${cls}">${sign}${fmt(tx.amount)}</span>
+        <button class="tx-del" onclick="window._dT('${tx._key}','${tx.type}','${tx.account}','${tx.toAccount||''}',${tx.amount})">×</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function initListeners(uid) {
+  accountsRef = ref(db,`users/${uid}/accounts`);
+  udhariRef   = ref(db,`users/${uid}/udhari`);
+  txRef       = ref(db,`users/${uid}/transactions`);
+  onValue(accountsRef, s => { localAcc=s.val()||{...DEFAULT_ACCOUNTS}; syncDot('synced'); render(); });
+  onValue(udhariRef,   s => { const v=s.val(); localU =v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];render();});
+  onValue(txRef,       s => { const v=s.val(); localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];render();});
+}
+
+onAuthStateChanged(auth, user => {
+  clearTimeout(window._fbTimeout);
+  document.getElementById('loading-screen').style.display='none';
+  if (user) {
+    cu = user;
+    document.getElementById('user-info').textContent = user.email;
+    document.getElementById('app-screen').style.display='block';
+    document.getElementById('login-screen').style.display='none';
+    onValue(ref(db,`users/${user.uid}/accounts`), async s => {
+      if (!s.exists()) {
+        await set(ref(db,`users/${user.uid}/accounts`), DEFAULT_ACCOUNTS);
+        await set(ref(db,`users/${user.uid}/udhari`), DEFAULT_UDHARI.reduce((a,u,i)=>({...a,['u'+i]:u}),{}));
+      }
+    },{onlyOnce:true});
+    initListeners(user.uid);
+  } else {
+    cu=null;
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('app-screen').style.display='none';
+  }
+});
+
+window.switchTab = t => {
+  document.getElementById('form-login').style.display=t==='login'?'block':'none';
+  document.getElementById('form-reg').style.display=t==='reg'?'block':'none';
+  document.getElementById('tab-login').classList.toggle('active',t==='login');
+  document.getElementById('tab-reg').classList.toggle('active',t==='reg');
+  setErr('');
+};
+
+window.doLogin = async () => {
+  const email=document.getElementById('l-email').value.trim();
+  const pass=document.getElementById('l-pass').value;
+  if (!email||!pass){setErr('Enter email and password');return;}
+  setErr('');
+  try { await signInWithEmailAndPassword(auth,email,pass); }
+  catch(e){
+    const m={'auth/user-not-found':'No account with this email.','auth/wrong-password':'Wrong password.','auth/invalid-email':'Invalid email.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try later.'};
+    setErr(m[e.code]||e.message);
+  }
+};
+
+window.doRegister = async () => {
+  const email=document.getElementById('r-email').value.trim();
+  const pass=document.getElementById('r-pass').value;
+  const pass2=document.getElementById('r-pass2').value;
+  if(!email||!pass){setErr('Enter email and password');return;}
+  if(pass!==pass2){setErr('Passwords do not match');return;}
+  if(pass.length<6){setErr('Password must be at least 6 characters');return;}
+  setErr('');
+  try { await createUserWithEmailAndPassword(auth,email,pass); toast('Account created! Welcome 🎉'); }
+  catch(e){
+    const m={'auth/email-already-in-use':'Email already registered. Sign in instead.','auth/invalid-email':'Invalid email.','auth/weak-password':'Password too weak.'};
+    setErr(m[e.code]||e.message);
+  }
+};
+
+window.doForgot = async () => {
+  const email=document.getElementById('l-email').value.trim();
+  if(!email){setErr('Enter your email first');return;}
+  try { await sendPasswordResetEmail(auth,email); setErr(''); toast('Reset link sent to '+email); }
+  catch(e){ setErr('Could not send reset email. Check address.'); }
+};
+
+window.doSignOut = async () => { await fbSignOut(auth); toast('Signed out'); };
+
+window._dU = async key => { await remove(ref(db,`users/${cu.uid}/udhari/${key}`)); toast('Entry removed'); };
+
+window._dT = async (key,type,account,toAccount,amount) => {
+  syncDot('syncing');
+  const upd={};
+  upd[`users/${cu.uid}/transactions/${key}`]=null;
+  const a=localAcc;
+  if(type==='expense') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)+amount;
+  else if(type==='income') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)-amount;
+  else if(type==='transfer'){
+    upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)+amount;
+    if(toAccount)upd[`users/${cu.uid}/accounts/${toAccount}`]=(a[toAccount]||0)-amount;
+  }
+  await update(ref(db),upd); toast('Transaction removed');
+};
+
+window.addUdhari = async () => {
+  const name=document.getElementById('u-name').value.trim();
+  const amount=parseFloat(document.getElementById('u-amt').value);
+  const type=document.getElementById('u-type').value;
+  if(!name||!amount||amount<=0){toast('Enter name and amount');return;}
+  await push(udhariRef,{name,amount,type});
+  document.getElementById('u-name').value='';
+  document.getElementById('u-amt').value='';
+  toast('Udhari entry added');
+};
+
+window.addTransaction = async () => {
+  const type=document.getElementById('f-type').value;
+  const account=document.getElementById('f-account').value;
+  const toAcc=document.getElementById('f-to').value;
+  const desc=document.getElementById('f-desc').value.trim();
+  const amount=parseFloat(document.getElementById('f-amt').value);
+  if(!amount||amount<=0){toast('Enter a valid amount');return;}
+  if(type==='transfer'&&account===toAcc){toast('From and To must differ');return;}
+  syncDot('syncing');
+  const now=new Date();
+  const date=now.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const upd={};
+  const txKey=push(txRef).key;
+  upd[`users/${cu.uid}/transactions/${txKey}`]={type,account,toAccount:type==='transfer'?toAcc:null,desc,amount,date};
+  const a=localAcc;
+  if(type==='expense') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)-amount;
+  else if(type==='income') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)+amount;
+  else if(type==='transfer'){
+    upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)-amount;
+    upd[`users/${cu.uid}/accounts/${toAcc}`]=(a[toAcc]||0)+amount;
+  }
+  await update(ref(db),upd);
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-amt').value='';
+  toast('Recorded ✓');
+};
+
+window.clearHistory = async () => {
+  if(!confirm('Clear all history? Balances stay the same.'))return;
+  await set(txRef,null); toast('History cleared');
+};
+
+window.toggleAdd = () => {
+  document.getElementById('add-body').classList.toggle('open');
+  document.getElementById('add-toggle').classList.toggle('open');
+};
+window.onTypeChange = () => {
+  document.getElementById('to-field').style.display=document.getElementById('f-type').value==='transfer'?'block':'none';
+};
+window.setQ = (d,a) => {
+  document.getElementById('f-desc').value=d;
+  document.getElementById('f-amt').value=a;
+  if(!document.getElementById('add-body').classList.contains('open'))window.toggleAdd();
+};
+
+let _tt;
+window.toast = msg => {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2500);
+};
+</script>
+</body>
+</html>
