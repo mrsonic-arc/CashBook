@@ -15,364 +15,459 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0a0a0a; --surface:#111111; --surface2:#181818;
+  --bg:#0a0a0a; --surface:#111111; --surface2:#181818; --surface3:#1e1e1e;
   --border:#2a2a2a; --border2:#333333;
   --text:#f0f0f0; --text2:#888888; --text3:#555555;
-  --gold:#c8a84b; --gold-dim:#7a622b;
+  --gold:#c8a84b; --gold-dim:#7a622b; --gold-bg:rgba(200,168,75,0.08);
   --green:#3dba78; --red:#e05555; --blue:#5b9bd5;
-  --radius:12px; --radius-sm:8px;
+  --radius:14px; --radius-sm:10px; --radius-xs:7px;
+  --tab-h:64px;
 }
-* { box-sizing:border-box; margin:0; padding:0; }
-body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; padding-bottom:60px; }
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; min-height:100vh; overscroll-behavior:none; }
 
-/* ── LOADING SCREEN ── */
+/* ── LOADING ── */
 #loading-screen { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; gap:20px; }
-.loading-logo { font-size:52px; animation:float 2s ease-in-out infinite; }
+.loading-logo { font-size:56px; animation:float 2s ease-in-out infinite; }
 @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-.loading-title { font-size:22px; font-weight:700; color:var(--gold); letter-spacing:-0.02em; }
-.loading-bar-wrap { width:200px; height:3px; background:var(--border2); border-radius:2px; overflow:hidden; }
-.loading-bar { height:100%; width:0%; background:var(--gold); border-radius:2px; transition:width 0.4s ease; }
-.loading-tip { font-size:13px; color:var(--text3); text-align:center; min-height:20px; transition:opacity 0.4s; padding:0 20px; }
+.loading-title { font-size:24px; font-weight:700; color:var(--gold); }
+.loading-bar-wrap { width:180px; height:3px; background:var(--border2); border-radius:2px; overflow:hidden; }
+.loading-bar { height:100%; width:0%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:2px; transition:width 0.5s ease; }
+.loading-tip { font-size:13px; color:var(--text3); text-align:center; padding:0 30px; transition:opacity 0.3s; min-height:20px; }
 #loading-retry { display:none; margin-top:8px; text-align:center; }
 
-.spinner { width:30px; height:30px; border:2px solid var(--border2); border-top-color:var(--gold); border-radius:50%; animation:spin 0.8s linear infinite; }
-@keyframes spin { to{transform:rotate(360deg);} }
-
 /* ── LOGIN ── */
-#login-screen { display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px 16px; }
-.login-box { width:100%; max-width:360px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:30px 26px; }
-.login-logo { font-size:34px; text-align:center; margin-bottom:8px; }
-.login-title { font-size:22px; font-weight:700; letter-spacing:-0.03em; text-align:center; margin-bottom:4px; }
+#login-screen { display:none; align-items:center; justify-content:center; min-height:100vh; padding:24px 16px; }
+.login-box { width:100%; max-width:360px; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:32px 26px; }
+.login-logo { font-size:38px; text-align:center; margin-bottom:10px; }
+.login-title { font-size:24px; font-weight:700; letter-spacing:-0.03em; text-align:center; margin-bottom:4px; }
 .login-title span { color:var(--gold); }
-.login-sub { font-size:12px; color:var(--text3); text-align:center; margin-bottom:22px; }
+.login-sub { font-size:12px; color:var(--text3); text-align:center; margin-bottom:24px; }
 .login-tabs { display:flex; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; margin-bottom:20px; }
-.login-tab { flex:1; padding:9px; text-align:center; font-size:13px; font-weight:600; font-family:'Syne',sans-serif; cursor:pointer; background:none; border:none; color:var(--text3); transition:all 0.15s; }
+.login-tab { flex:1; padding:10px; text-align:center; font-size:13px; font-weight:600; font-family:'Syne',sans-serif; cursor:pointer; background:none; border:none; color:var(--text3); transition:all 0.15s; }
 .login-tab.active { background:var(--gold); color:#000; }
-.lf { margin-bottom:12px; }
+.lf { margin-bottom:13px; }
 .lf label { display:block; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px; }
-.lf input { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-size:14px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; }
+.lf input { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:11px 12px; border-radius:var(--radius-sm); font-size:14px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; }
 .lf input:focus { border-color:var(--gold); }
-.btn-auth { width:100%; background:var(--gold); color:#000; border:none; padding:11px; border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; margin-top:4px; }
-.btn-auth:hover { opacity:0.9; }
+.btn-auth { width:100%; background:var(--gold); color:#000; border:none; padding:12px; border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; margin-top:4px; }
 .login-err { font-size:12px; color:var(--red); text-align:center; margin-top:10px; min-height:16px; }
 .forgot-link { text-align:center; margin-top:10px; font-size:12px; color:var(--text3); cursor:pointer; text-decoration:underline; }
 .login-note { font-size:11px; color:var(--text3); text-align:center; margin-top:16px; }
 
-/* ── APP ── */
-#app-screen { display:none; }
-.header { background:var(--surface); border-bottom:1px solid var(--border); padding:13px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:100; }
-.header-title { font-size:17px; font-weight:700; letter-spacing:-0.02em; }
-.header-title span { color:var(--gold); }
-.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); margin-left:8px; transition:background 0.3s; }
+/* ── APP SHELL ── */
+#app-screen { display:none; flex-direction:column; min-height:100vh; }
+
+/* ── HEADER ── */
+.app-header { background:var(--surface); border-bottom:1px solid var(--border); padding:12px 16px; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; z-index:50; }
+.app-header-left { display:flex; align-items:center; gap:8px; }
+.app-logo { font-size:20px; }
+.app-title { font-size:17px; font-weight:700; letter-spacing:-0.02em; }
+.app-title span { color:var(--gold); }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); transition:background 0.3s; }
 .sync-dot.synced { background:var(--green); }
 .sync-dot.syncing { background:var(--gold); animation:pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.header-right { display:flex; align-items:center; gap:8px; }
-.user-info { font-size:11px; color:var(--text3); max-width:150px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.btn-signout { background:none; border:1px solid var(--border); color:var(--text3); padding:5px 11px; border-radius:var(--radius-sm); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; transition:all 0.15s; }
-.btn-signout:hover { border-color:var(--red); color:var(--red); }
+.btn-signout { background:none; border:1px solid var(--border); color:var(--text3); padding:5px 11px; border-radius:var(--radius-xs); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; }
 
-.networth-banner { margin:14px 14px 0; background:var(--surface); border:1px solid var(--border2); border-radius:var(--radius); padding:20px; position:relative; overflow:hidden; }
-.networth-banner::before { content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; background:radial-gradient(circle,rgba(200,168,75,0.07) 0%,transparent 70%); border-radius:50%; }
-.nw-label { font-size:10px; color:var(--text3); letter-spacing:0.1em; text-transform:uppercase; margin-bottom:4px; }
-.nw-value { font-size:30px; font-weight:700; letter-spacing:-0.03em; font-family:'DM Mono',monospace; color:var(--gold); }
-.nw-sub { display:flex; gap:16px; margin-top:12px; flex-wrap:wrap; }
-.nw-sub-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
-.nw-sub-val { font-size:14px; font-weight:600; font-family:'DM Mono',monospace; margin-top:2px; }
+/* ── PAGE CONTENT ── */
+.page { display:none; flex:1; overflow-y:auto; padding-bottom:calc(var(--tab-h) + 10px); }
+.page.active { display:block; }
+
+/* ── BOTTOM TAB BAR ── */
+.tab-bar { position:fixed; bottom:0; left:0; right:0; height:var(--tab-h); background:var(--surface); border-top:1px solid var(--border); display:flex; z-index:100; padding-bottom:env(safe-area-inset-bottom); }
+.tab-item { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; transition:all 0.15s; padding:8px 4px; border:none; background:none; font-family:'Syne',sans-serif; color:var(--text3); }
+.tab-item.active { color:var(--gold); }
+.tab-icon { font-size:22px; line-height:1; }
+.tab-label { font-size:10px; font-weight:600; letter-spacing:0.02em; }
+.tab-item.active .tab-label { color:var(--gold); }
+
+/* ── HOME PAGE ── */
+.networth-card { margin:14px 14px 0; background:linear-gradient(135deg,#161610 0%,#111111 100%); border:1px solid var(--gold-dim); border-radius:var(--radius); padding:22px; position:relative; overflow:hidden; }
+.networth-card::before { content:''; position:absolute; top:-30px; right:-30px; width:160px; height:160px; background:radial-gradient(circle,rgba(200,168,75,0.1) 0%,transparent 70%); border-radius:50%; pointer-events:none; }
+.nw-label { font-size:10px; color:var(--gold-dim); letter-spacing:0.12em; text-transform:uppercase; margin-bottom:6px; }
+.nw-value { font-size:34px; font-weight:700; letter-spacing:-0.03em; font-family:'DM Mono',monospace; color:var(--gold); }
+.nw-sub { display:flex; gap:0; margin-top:16px; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; }
+.nw-sub-item { flex:1; padding:10px 8px; text-align:center; border-right:1px solid var(--border); cursor:pointer; transition:background 0.15s; }
+.nw-sub-item:last-child { border-right:none; }
+.nw-sub-item:active { background:var(--surface2); }
+.nw-sub-label { font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:3px; }
+.nw-sub-val { font-size:12px; font-weight:600; font-family:'DM Mono',monospace; }
 .nw-sub-val.green { color:var(--green); }
 .nw-sub-val.blue { color:var(--blue); }
 .nw-sub-val.gold { color:var(--gold); }
 
-/* ── ACCOUNT CARDS ── */
-.section-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:10px 14px 0; }
-.account-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; cursor:pointer; transition:border-color 0.15s, transform 0.1s; position:relative; }
-.account-card:active { transform:scale(0.98); }
-.account-card:hover { border-color:var(--gold-dim); }
-.card-tap-hint { font-size:9px; color:var(--text3); position:absolute; top:10px; right:10px; opacity:0.6; }
-.card-icon { font-size:14px; margin-bottom:5px; }
-.card-name { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
-.card-amount { font-size:18px; font-weight:600; font-family:'DM Mono',monospace; }
+.section-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; font-weight:600; padding:16px 16px 8px; }
+.accounts-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 14px; }
+.account-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:14px; cursor:pointer; transition:border-color 0.15s, transform 0.1s; position:relative; overflow:hidden; }
+.account-card::after { content:'↑'; position:absolute; top:10px; right:12px; font-size:11px; color:var(--text3); opacity:0.5; }
+.account-card:active { transform:scale(0.97); border-color:var(--gold-dim); }
+.card-icon { font-size:18px; margin-bottom:8px; }
+.card-name { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.07em; margin-bottom:5px; }
+.card-amount { font-size:18px; font-weight:700; font-family:'DM Mono',monospace; }
 .card-amount.negative { color:var(--red); }
 .card-note { font-size:10px; color:var(--text3); margin-top:3px; }
-.gold-note { background:rgba(200,168,75,0.06); border:1px solid rgba(200,168,75,0.18); border-radius:var(--radius-sm); padding:8px 11px; font-size:10px; color:var(--gold-dim); margin-top:8px; line-height:1.5; }
+.gold-note { background:rgba(200,168,75,0.06); border:1px solid rgba(200,168,75,0.15); border-radius:var(--radius-xs); padding:8px 10px; font-size:10px; color:var(--gold-dim); margin-top:8px; line-height:1.5; }
+.full-card { grid-column:1/-1; }
 
-/* ── UDHARI ── */
-.udhari-card { grid-column:1/-1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; }
-.udhari-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-.udhari-title { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
-.udhari-total { font-size:16px; font-weight:600; font-family:'DM Mono',monospace; color:var(--green); }
-.udhari-rows { display:flex; flex-direction:column; gap:5px; margin-bottom:10px; }
-.udhari-row { display:flex; justify-content:space-between; align-items:center; padding:7px 10px; background:var(--surface2); border-radius:6px; }
-.udhari-person { font-size:13px; }
-.udhari-amt { font-size:13px; font-family:'DM Mono',monospace; font-weight:500; }
-.udhari-amt.plus { color:var(--green); }
-.udhari-amt.minus { color:var(--red); }
-.udhari-add-row { display:flex; gap:6px; flex-wrap:wrap; }
-.u-inp { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:8px 10px; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-size:12px; outline:none; }
-.u-inp:focus { border-color:var(--gold); }
-
-/* ── ADD TRANSACTION ── */
-.add-section { margin:10px 14px 0; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
-.add-header { padding:13px 15px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
-.add-header-title { font-size:13px; font-weight:600; }
-.add-toggle { font-size:20px; color:var(--text3); transition:transform 0.2s; line-height:1; }
-.add-toggle.open { transform:rotate(45deg); }
-.add-body { padding:14px 15px; display:none; }
-.add-body.open { display:block; }
-.field-row { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+/* ── ADD PAGE ── */
+.add-page-wrap { padding:16px 14px; }
+.add-page-title { font-size:18px; font-weight:700; margin-bottom:16px; }
+.field-group { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:12px; }
+.field-group-title { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px; font-weight:600; }
+.field-row { display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+.field-row:last-child { margin-bottom:0; }
 .field { flex:1; min-width:100px; }
-.field label { display:block; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:5px; }
-.field input, .field select { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:9px 11px; border-radius:var(--radius-sm); font-size:13px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; -webkit-appearance:none; }
+.field label { display:block; font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
+.field input, .field select { width:100%; background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:11px 12px; border-radius:var(--radius-sm); font-size:14px; font-family:'Syne',sans-serif; outline:none; transition:border-color 0.15s; -webkit-appearance:none; }
 .field input:focus, .field select:focus { border-color:var(--gold); }
-.quick-btns { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:10px; }
-.quick-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text2); padding:5px 10px; border-radius:20px; font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; transition:all 0.15s; }
-.quick-btn:hover { border-color:var(--gold); color:var(--gold); }
-.btn-submit { width:100%; background:var(--gold); color:#000; border:none; padding:11px; border-radius:var(--radius-sm); font-size:14px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; }
-.btn-submit:hover { opacity:0.9; }
-.btn-submit:active { transform:scale(0.99); }
+.quick-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px; font-weight:600; }
+.quick-btns { display:flex; gap:6px; flex-wrap:wrap; }
+.quick-btn { background:var(--surface2); border:1px solid var(--border); color:var(--text2); padding:7px 12px; border-radius:20px; font-size:12px; font-family:'Syne',sans-serif; cursor:pointer; transition:all 0.15s; }
+.quick-btn:active { border-color:var(--gold); color:var(--gold); background:var(--gold-bg); }
+.btn-submit { width:100%; background:var(--gold); color:#000; border:none; padding:14px; border-radius:var(--radius-sm); font-size:15px; font-weight:700; font-family:'Syne',sans-serif; cursor:pointer; margin-top:4px; }
+.btn-submit:active { opacity:0.85; transform:scale(0.99); }
 
-/* ── HISTORY ── */
-.history-section { margin:10px 14px 0; }
-.history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.history-title { font-size:11px; font-weight:600; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; }
-.btn-clear { background:none; border:none; color:var(--text3); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; }
-.btn-clear:hover { color:var(--red); }
-.tx-list { display:flex; flex-direction:column; gap:5px; }
-.tx-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:11px 13px; display:flex; justify-content:space-between; align-items:center; animation:slideIn 0.2s ease; }
-@keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+/* ── HISTORY PAGE ── */
+.history-page-wrap { padding:14px; }
+.history-filters { display:flex; gap:6px; margin-bottom:14px; overflow-x:auto; padding-bottom:2px; }
+.filter-btn { background:var(--surface); border:1px solid var(--border); color:var(--text2); padding:7px 14px; border-radius:20px; font-size:12px; font-family:'Syne',sans-serif; cursor:pointer; white-space:nowrap; transition:all 0.15s; flex-shrink:0; }
+.filter-btn.active { background:var(--gold); border-color:var(--gold); color:#000; font-weight:700; }
+.history-list { display:flex; flex-direction:column; gap:6px; }
+.tx-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:13px 14px; display:flex; justify-content:space-between; align-items:center; animation:slideIn 0.2s ease; }
+@keyframes slideIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 .tx-left { flex:1; }
-.tx-desc { font-size:13px; font-weight:500; margin-bottom:2px; }
-.tx-meta { font-size:10px; color:var(--text3); }
-.tx-right { display:flex; align-items:center; gap:8px; }
-.tx-amount { font-size:14px; font-weight:600; font-family:'DM Mono',monospace; }
+.tx-desc { font-size:14px; font-weight:600; margin-bottom:3px; }
+.tx-meta { font-size:11px; color:var(--text3); }
+.tx-right { display:flex; align-items:center; gap:10px; }
+.tx-amount { font-size:15px; font-weight:700; font-family:'DM Mono',monospace; }
 .tx-amount.expense { color:var(--red); }
 .tx-amount.income { color:var(--green); }
-.tx-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:16px; padding:2px 4px; border-radius:4px; }
-.tx-del:hover { color:var(--red); }
-.empty { text-align:center; padding:22px; color:var(--text3); font-size:12px; }
+.tx-amount.transfer { color:var(--blue); }
+.tx-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:18px; padding:2px 4px; }
+.tx-badge { font-size:9px; padding:2px 7px; border-radius:10px; font-weight:700; letter-spacing:0.04em; }
+.tx-badge.expense { background:rgba(224,85,85,0.12); color:var(--red); }
+.tx-badge.income { background:rgba(61,186,120,0.12); color:var(--green); }
+.tx-badge.transfer { background:rgba(91,155,213,0.12); color:var(--blue); }
+.history-clear { background:none; border:1px solid var(--border); color:var(--text3); padding:8px 16px; border-radius:var(--radius-xs); font-size:12px; font-family:'Syne',sans-serif; cursor:pointer; display:block; margin:14px auto 0; }
+.empty { text-align:center; padding:40px 20px; color:var(--text3); font-size:13px; }
 
-/* ── SLIDE-UP PANEL ── */
-.panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:200; opacity:0; transition:opacity 0.3s; pointer-events:none; }
+/* ── UDHARI PAGE ── */
+.udhari-page-wrap { padding:14px; }
+.udhari-summary { background:linear-gradient(135deg,#0d1a12,#111111); border:1px solid rgba(61,186,120,0.2); border-radius:var(--radius); padding:18px; margin-bottom:14px; }
+.udhari-sum-label { font-size:10px; color:var(--text3); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:4px; }
+.udhari-sum-val { font-size:28px; font-weight:700; font-family:'DM Mono',monospace; color:var(--green); }
+.udhari-sum-sub { font-size:11px; color:var(--text3); margin-top:6px; }
+.udhari-list { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.udhari-item { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px; display:flex; justify-content:space-between; align-items:center; }
+.udhari-person-name { font-size:15px; font-weight:600; margin-bottom:3px; }
+.udhari-person-type { font-size:11px; color:var(--text3); }
+.udhari-item-right { display:flex; align-items:center; gap:10px; }
+.udhari-item-amt { font-size:16px; font-weight:700; font-family:'DM Mono',monospace; }
+.udhari-item-amt.given { color:var(--green); }
+.udhari-item-amt.owed { color:var(--red); }
+.udhari-del { background:none; border:none; color:var(--text3); cursor:pointer; font-size:18px; padding:2px; }
+.add-udhari-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; }
+.add-udhari-title { font-size:13px; font-weight:600; margin-bottom:12px; color:var(--text2); }
+.udhari-form { display:flex; gap:8px; flex-wrap:wrap; }
+.u-inp { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:10px 12px; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-size:13px; outline:none; transition:border-color 0.15s; }
+.u-inp:focus { border-color:var(--gold); }
+.btn-add-udhari { background:var(--gold); color:#000; border:none; padding:10px 18px; border-radius:var(--radius-sm); font-family:'Syne',sans-serif; font-weight:700; font-size:14px; cursor:pointer; }
+
+/* ── SLIDE-UP PANEL (account history) ── */
+.panel-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:200; opacity:0; transition:opacity 0.3s; pointer-events:none; }
 .panel-overlay.open { opacity:1; pointer-events:all; }
-.panel { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-radius:20px 20px 0 0; border-top:1px solid var(--border2); z-index:201; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); max-height:80vh; display:flex; flex-direction:column; }
+.panel { position:fixed; bottom:0; left:0; right:0; background:var(--surface); border-radius:22px 22px 0 0; border-top:1px solid var(--border2); z-index:201; transform:translateY(100%); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); max-height:82vh; display:flex; flex-direction:column; }
 .panel.open { transform:translateY(0); }
 .panel-handle { width:36px; height:4px; background:var(--border2); border-radius:2px; margin:12px auto 0; flex-shrink:0; }
-.panel-header { padding:14px 16px 10px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); flex-shrink:0; }
-.panel-title { font-size:15px; font-weight:700; }
-.panel-balance { font-size:20px; font-weight:700; font-family:'DM Mono',monospace; color:var(--gold); }
-.panel-close { background:none; border:none; color:var(--text3); font-size:22px; cursor:pointer; padding:0 4px; line-height:1; }
-.panel-body { overflow-y:auto; padding:10px 14px 30px; flex:1; }
-.panel-tx-item { background:var(--surface2); border-radius:var(--radius-sm); padding:10px 12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; animation:slideIn 0.2s ease; }
-.panel-tx-left { flex:1; }
-.panel-tx-desc { font-size:13px; font-weight:500; margin-bottom:2px; }
+.panel-header { padding:14px 18px 12px; border-bottom:1px solid var(--border); flex-shrink:0; }
+.panel-title { font-size:12px; color:var(--text3); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:4px; }
+.panel-balance { font-size:26px; font-weight:700; font-family:'DM Mono',monospace; color:var(--gold); }
+.panel-close { position:absolute; top:14px; right:16px; background:var(--surface2); border:none; color:var(--text2); font-size:18px; cursor:pointer; width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+.panel-body { overflow-y:auto; padding:12px 14px 30px; flex:1; }
+.panel-tx { background:var(--surface2); border-radius:var(--radius-xs); padding:12px 13px; display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.panel-tx-desc { font-size:13px; font-weight:600; margin-bottom:2px; }
 .panel-tx-date { font-size:10px; color:var(--text3); }
-.panel-tx-amt { font-size:14px; font-weight:600; font-family:'DM Mono',monospace; }
+.panel-tx-amt { font-size:14px; font-weight:700; font-family:'DM Mono',monospace; }
 .panel-tx-amt.expense { color:var(--red); }
 .panel-tx-amt.income { color:var(--green); }
 .panel-tx-amt.transfer { color:var(--blue); }
-.panel-empty { text-align:center; padding:30px; color:var(--text3); font-size:12px; }
+
+/* ── NETWORTH BREAKDOWN PANEL ── */
+.nw-panel-item { display:flex; justify-content:space-between; align-items:center; padding:13px 0; border-bottom:1px solid var(--border); }
+.nw-panel-item:last-child { border-bottom:none; }
+.nw-panel-icon { font-size:18px; margin-right:10px; }
+.nw-panel-name { font-size:14px; font-weight:600; }
+.nw-panel-sub { font-size:11px; color:var(--text3); margin-top:2px; }
+.nw-panel-amt { font-size:15px; font-weight:700; font-family:'DM Mono',monospace; }
+.nw-panel-amt.pos { color:var(--green); }
+.nw-panel-amt.neg { color:var(--red); }
+.nw-panel-bar { height:3px; background:var(--border); border-radius:2px; margin-top:4px; overflow:hidden; }
+.nw-panel-bar-fill { height:100%; background:var(--gold); border-radius:2px; }
 
 /* ── TOAST ── */
-.toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:10px 20px; border-radius:30px; font-size:13px; opacity:0; transition:all 0.3s; z-index:999; white-space:nowrap; }
+.toast { position:fixed; bottom:calc(var(--tab-h) + 12px); left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:10px 22px; border-radius:30px; font-size:13px; opacity:0; transition:all 0.3s; z-index:999; white-space:nowrap; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-@media(max-width:380px) { .section-grid{grid-template-columns:1fr;} .nw-value{font-size:26px;} }
+@media(max-width:360px) { .nw-value{font-size:28px;} .accounts-grid{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
 
-<!-- ── LOADING SCREEN ── -->
+<!-- LOADING -->
 <div id="loading-screen">
   <div class="loading-logo">💰</div>
-  <div class="loading-title">Mrsonic Finance</div>
+  <div style="font-size:24px;font-weight:700;color:var(--gold);font-family:'Syne',sans-serif;">Mrsonic Finance</div>
   <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
   <div class="loading-tip" id="loading-msg">Starting up…</div>
   <div id="loading-retry">
-    <div style="font-size:12px;color:var(--red);margin-bottom:10px;">Could not connect. Check your internet.</div>
+    <div style="font-size:12px;color:var(--red);margin-bottom:10px;">Could not connect. Check internet.</div>
     <button onclick="location.reload()" style="background:var(--gold);color:#000;border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;font-family:'Syne',sans-serif;cursor:pointer;">Retry</button>
   </div>
 </div>
 
-<!-- ── LOGIN ── -->
-<div id="login-screen" style="display:none;">
-  <div class="login-box">
-    <div class="login-logo">💰</div>
-    <div class="login-title">Mrsonic <span>Finance</span></div>
-    <div class="login-sub">Personal cashbook — synced everywhere</div>
-    <div class="login-tabs">
-      <button class="login-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
-      <button class="login-tab" id="tab-reg" onclick="switchTab('reg')">Register</button>
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;flex-direction:column;">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px 16px;">
+    <div class="login-box">
+      <div class="login-logo">💰</div>
+      <div class="login-title">Mrsonic <span>Finance</span></div>
+      <div class="login-sub">Personal cashbook — synced everywhere</div>
+      <div class="login-tabs">
+        <button class="login-tab active" id="tab-login" onclick="switchTab('login')">Sign In</button>
+        <button class="login-tab" id="tab-reg" onclick="switchTab('reg')">Register</button>
+      </div>
+      <div id="form-login">
+        <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn-auth" onclick="doLogin()">Sign In</button>
+        <div class="forgot-link" onclick="doForgot()">Forgot password?</div>
+      </div>
+      <div id="form-reg" style="display:none;">
+        <div class="lf"><label>Email</label><input type="email" id="r-email" placeholder="you@email.com"></div>
+        <div class="lf"><label>Password (min 6 chars)</label><input type="password" id="r-pass" placeholder="••••••••"></div>
+        <div class="lf"><label>Confirm Password</label><input type="password" id="r-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"></div>
+        <button class="btn-auth" onclick="doRegister()">Create Account</button>
+      </div>
+      <div class="login-err" id="login-err"></div>
+      <div class="login-note">Data stored privately in Firebase</div>
     </div>
-    <div id="form-login">
-      <div class="lf"><label>Email</label><input type="email" id="l-email" placeholder="you@email.com" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <div class="lf"><label>Password</label><input type="password" id="l-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
-      <button class="btn-auth" onclick="doLogin()">Sign In</button>
-      <div class="forgot-link" onclick="doForgot()">Forgot password?</div>
-    </div>
-    <div id="form-reg" style="display:none;">
-      <div class="lf"><label>Email</label><input type="email" id="r-email" placeholder="you@email.com"></div>
-      <div class="lf"><label>Password (min 6 chars)</label><input type="password" id="r-pass" placeholder="••••••••"></div>
-      <div class="lf"><label>Confirm Password</label><input type="password" id="r-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"></div>
-      <button class="btn-auth" onclick="doRegister()">Create Account</button>
-    </div>
-    <div class="login-err" id="login-err"></div>
-    <div class="login-note">Data stored privately in Firebase · Open from any device</div>
   </div>
 </div>
 
-<!-- ── APP ── -->
+<!-- APP -->
 <div id="app-screen">
-  <div class="header">
-    <div style="display:flex;align-items:center;">
-      <div class="header-title">Mrsonic <span>Finance</span></div>
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-header-left">
+      <div class="app-logo">💰</div>
+      <div class="app-title">Mrsonic <span>Finance</span></div>
       <div class="sync-dot" id="sync-dot"></div>
     </div>
-    <div class="header-right">
-      <div class="user-info" id="user-info"></div>
-      <button class="btn-signout" onclick="doSignOut()">Sign out</button>
-    </div>
+    <button class="btn-signout" onclick="doSignOut()">Sign out</button>
   </div>
 
-  <div class="networth-banner">
-    <div class="nw-label">Total Networth</div>
-    <div class="nw-value" id="nw-total">₹0.00</div>
-    <div class="nw-sub">
-      <div><div class="nw-sub-label">Available Cash</div><div class="nw-sub-val green" id="nw-cash">₹0.00</div></div>
-      <div><div class="nw-sub-label">Udhari</div><div class="nw-sub-val blue" id="nw-udhari">₹0.00</div></div>
-      <div><div class="nw-sub-label">Investments</div><div class="nw-sub-val gold" id="nw-invest">₹0.00</div></div>
-    </div>
-  </div>
-
-  <div class="section-grid">
-    <div class="account-card" onclick="openPanel('fam')">
-      <span class="card-tap-hint">tap ↑</span>
-      <div class="card-icon">💵</div><div class="card-name">Fam Account</div>
-      <div class="card-amount" id="amt-fam">₹0.00</div>
-    </div>
-    <div class="account-card" onclick="openPanel('cash')">
-      <span class="card-tap-hint">tap ↑</span>
-      <div class="card-icon">💵</div><div class="card-name">Cash in Hand</div>
-      <div class="card-amount" id="amt-cash">₹0.00</div>
-    </div>
-    <div class="account-card" onclick="openPanel('bank')">
-      <span class="card-tap-hint">tap ↑</span>
-      <div class="card-icon">🏦</div><div class="card-name">Bank · CBI</div>
-      <div class="card-amount" id="amt-bank">₹0.00</div>
-      <div class="card-note">A/C ending 8466</div>
-    </div>
-    <div class="account-card" onclick="openPanel('emergency')">
-      <span class="card-tap-hint">tap ↑</span>
-      <div class="card-icon">🧯</div><div class="card-name">Emergency Fund</div>
-      <div class="card-amount" id="amt-emergency">₹0.00</div>
-    </div>
-    <div class="account-card" style="grid-column:1/-1;" onclick="openPanel('invest')">
-      <span class="card-tap-hint">tap ↑</span>
-      <div class="card-icon">⛏️</div><div class="card-name">Investments</div>
-      <div class="card-amount" id="amt-invest">₹0.00</div>
-      <div class="card-note">DigiGold (Fam + Jar) · Lenden · PhonePay Gold</div>
-      <div class="gold-note">⚠ Withdraw DigiGold only when profit > ₹178.95 to cover taxes</div>
-    </div>
-    <div class="udhari-card">
-      <div class="udhari-header">
-        <div class="udhari-title">🧃 Udhari (given out)</div>
-        <div class="udhari-total" id="udhari-net">₹0.00</div>
-      </div>
-      <div class="udhari-rows" id="udhari-list"></div>
-      <div class="udhari-add-row">
-        <input class="u-inp" type="text" id="u-name" placeholder="Person name" style="flex:1;min-width:90px;">
-        <input class="u-inp" type="number" id="u-amt" placeholder="₹ Amt" style="width:85px;">
-        <select class="u-inp" id="u-type"><option value="given">Given</option><option value="owed">I Owe</option></select>
-        <button onclick="addUdhari()" style="background:var(--gold);color:#000;border:none;padding:8px 13px;border-radius:var(--radius-sm);font-family:'Syne',sans-serif;font-weight:700;font-size:13px;cursor:pointer;">+</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="add-section">
-    <div class="add-header" onclick="toggleAdd()">
-      <div class="add-header-title">+ Add Transaction</div>
-      <div class="add-toggle" id="add-toggle">+</div>
-    </div>
-    <div class="add-body" id="add-body">
-      <div class="field-row">
-        <div class="field" style="flex:0.65;"><label>Type</label>
-          <select id="f-type" onchange="onTypeChange()">
-            <option value="expense">Expense 💸</option>
-            <option value="income">Income 💰</option>
-            <option value="transfer">Transfer ↔</option>
-          </select>
+  <!-- ── HOME TAB ── -->
+  <div class="page active" id="page-home">
+    <div class="networth-card">
+      <div class="nw-label">Total Net Worth</div>
+      <div class="nw-value" id="nw-total">₹0.00</div>
+      <div class="nw-sub">
+        <div class="nw-sub-item" onclick="openNwPanel()">
+          <div class="nw-sub-label">Cash</div>
+          <div class="nw-sub-val green" id="nw-cash">₹0</div>
         </div>
-        <div class="field"><label>Account</label>
-          <select id="f-account">
-            <option value="fam">Fam Account</option><option value="cash">Cash</option>
-            <option value="bank">Bank (CBI)</option><option value="emergency">Emergency Fund</option>
-            <option value="invest">Investments</option>
-          </select>
+        <div class="nw-sub-item" onclick="openNwPanel()">
+          <div class="nw-sub-label">Udhari</div>
+          <div class="nw-sub-val blue" id="nw-udhari">₹0</div>
         </div>
-        <div class="field" id="to-field" style="display:none;"><label>To Account</label>
-          <select id="f-to">
-            <option value="cash">Cash</option><option value="fam">Fam Account</option>
-            <option value="bank">Bank (CBI)</option><option value="emergency">Emergency Fund</option>
-            <option value="invest">Investments</option>
-          </select>
+        <div class="nw-sub-item" onclick="openNwPanel()">
+          <div class="nw-sub-label">Invest</div>
+          <div class="nw-sub-val gold" id="nw-invest">₹0</div>
         </div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Biryani, Petrol…"></div>
-        <div class="field" style="flex:0.45;"><label>Amount (₹)</label><input type="number" id="f-amt" placeholder="0" min="0" step="0.01"></div>
+    </div>
+
+    <div class="section-label">Accounts</div>
+    <div class="accounts-grid">
+      <div class="account-card" onclick="openAccPanel('fam')">
+        <div class="card-icon">💳</div>
+        <div class="card-name">FamPay</div>
+        <div class="card-amount" id="amt-fam">₹0.00</div>
       </div>
-      <div class="quick-btns">
-        <span style="font-size:10px;color:var(--text3);align-self:center;">Quick:</span>
-        <button class="quick-btn" onclick="setQ('Biryani',430)">Biryani ₹430</button>
-        <button class="quick-btn" onclick="setQ('Coconut',60)">Coconut ₹60</button>
-        <button class="quick-btn" onclick="setQ('Shake',50)">Shake ₹50</button>
-        <button class="quick-btn" onclick="setQ('Pizza',130)">Pizza ₹130</button>
-        <button class="quick-btn" onclick="setQ('Auto',30)">Auto ₹30</button>
+      <div class="account-card" onclick="openAccPanel('cash')">
+        <div class="card-icon">💵</div>
+        <div class="card-name">Cash in Hand</div>
+        <div class="card-amount" id="amt-cash">₹0.00</div>
       </div>
-      <button class="btn-submit" onclick="addTransaction()">Record Transaction</button>
+      <div class="account-card" onclick="openAccPanel('bank')">
+        <div class="card-icon">🏦</div>
+        <div class="card-name">Bank · CBI</div>
+        <div class="card-amount" id="amt-bank">₹0.00</div>
+        <div class="card-note">A/C ending 8466</div>
+      </div>
+      <div class="account-card" onclick="openAccPanel('emergency')">
+        <div class="card-icon">🧯</div>
+        <div class="card-name">Emergency Fund</div>
+        <div class="card-amount" id="amt-emergency">₹0.00</div>
+      </div>
+      <div class="account-card full-card" onclick="openAccPanel('invest')">
+        <div class="card-icon">⛏️</div>
+        <div class="card-name">Investments</div>
+        <div class="card-amount" id="amt-invest">₹0.00</div>
+        <div class="card-note">DigiGold · Lenden · PhonePay Gold</div>
+        <div class="gold-note">⚠ Withdraw DigiGold only when profit > ₹178.95 to cover taxes</div>
+      </div>
     </div>
   </div>
 
-  <div class="add-section" style="margin-top:10px;">
-    <div class="add-header" onclick="toggleHistory()">
-      <div class="add-header-title">📋 Transaction History</div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <button onclick="event.stopPropagation();clearHistory()" style="background:none;border:none;color:var(--text3);font-size:11px;font-family:'Syne',sans-serif;cursor:pointer;">Clear all</button>
-        <div class="add-toggle" id="history-toggle">+</div>
+  <!-- ── ADD TAB ── -->
+  <div class="page" id="page-add">
+    <div class="add-page-wrap">
+      <div class="add-page-title">Add Transaction</div>
+      <div class="field-group">
+        <div class="field-group-title">Transaction Details</div>
+        <div class="field-row">
+          <div class="field"><label>Type</label>
+            <select id="f-type" onchange="onTypeChange()">
+              <option value="expense">Expense 💸</option>
+              <option value="income">Income 💰</option>
+              <option value="transfer">Transfer ↔</option>
+            </select>
+          </div>
+          <div class="field"><label>Account</label>
+            <select id="f-account">
+              <option value="fam">FamPay</option>
+              <option value="cash">Cash</option>
+              <option value="bank">Bank (CBI)</option>
+              <option value="emergency">Emergency Fund</option>
+              <option value="invest">Investments</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row" id="to-field" style="display:none;">
+          <div class="field"><label>To Account</label>
+            <select id="f-to">
+              <option value="cash">Cash</option>
+              <option value="fam">FamPay</option>
+              <option value="bank">Bank (CBI)</option>
+              <option value="emergency">Emergency Fund</option>
+              <option value="invest">Investments</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Description</label><input type="text" id="f-desc" placeholder="e.g. Biryani, Petrol…"></div>
+          <div class="field" style="flex:0.5;min-width:90px;"><label>Amount (₹)</label><input type="number" id="f-amt" placeholder="0" min="0" step="0.01"></div>
+        </div>
+      </div>
+      <div class="field-group">
+        <div class="quick-label">Quick Add</div>
+        <div class="quick-btns">
+          <button class="quick-btn" onclick="setQ('Biryani',430)">🍛 Biryani ₹430</button>
+          <button class="quick-btn" onclick="setQ('Coconut',60)">🥥 Coconut ₹60</button>
+          <button class="quick-btn" onclick="setQ('Shake',50)">🥤 Shake ₹50</button>
+          <button class="quick-btn" onclick="setQ('Pizza',130)">🍕 Pizza ₹130</button>
+          <button class="quick-btn" onclick="setQ('Auto',30)">🛺 Auto ₹30</button>
+          <button class="quick-btn" onclick="setQ('Petrol',200)">⛽ Petrol ₹200</button>
+        </div>
+      </div>
+      <button class="btn-submit" onclick="addTransaction()">✓ Record Transaction</button>
+    </div>
+  </div>
+
+  <!-- ── HISTORY TAB ── -->
+  <div class="page" id="page-history">
+    <div class="history-page-wrap">
+      <div class="history-filters">
+        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+        <button class="filter-btn" onclick="setFilter('expense',this)">Expenses 💸</button>
+        <button class="filter-btn" onclick="setFilter('income',this)">Income 💰</button>
+        <button class="filter-btn" onclick="setFilter('transfer',this)">Transfers ↔</button>
+      </div>
+      <div class="history-list" id="tx-list"><div class="empty">No transactions yet</div></div>
+      <button class="history-clear" onclick="clearHistory()">Clear All History</button>
+    </div>
+  </div>
+
+  <!-- ── UDHARI TAB ── -->
+  <div class="page" id="page-udhari">
+    <div class="udhari-page-wrap">
+      <div class="udhari-summary">
+        <div class="udhari-sum-label">Total Udhari (Net)</div>
+        <div class="udhari-sum-val" id="udhari-net">₹0.00</div>
+        <div class="udhari-sum-sub" id="udhari-sub">—</div>
+      </div>
+      <div class="udhari-list" id="udhari-list"></div>
+      <div class="add-udhari-card">
+        <div class="add-udhari-title">+ Add Entry</div>
+        <div class="udhari-form">
+          <input class="u-inp" type="text" id="u-name" placeholder="Person name" style="flex:1;min-width:110px;">
+          <input class="u-inp" type="number" id="u-amt" placeholder="₹ Amount" style="width:110px;">
+          <select class="u-inp" id="u-type">
+            <option value="given">I Gave</option>
+            <option value="owed">I Owe</option>
+          </select>
+          <button class="btn-add-udhari" onclick="addUdhari()">Add</button>
+        </div>
       </div>
     </div>
-    <div class="add-body" id="history-body">
-      <div class="tx-list" id="tx-list"><div class="empty">Loading…</div></div>
-    </div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab-item active" id="tab-home" onclick="switchPage('home')">
+      <div class="tab-icon">🏠</div>
+      <div class="tab-label">Home</div>
+    </button>
+    <button class="tab-item" id="tab-add" onclick="switchPage('add')">
+      <div class="tab-icon">➕</div>
+      <div class="tab-label">Add</div>
+    </button>
+    <button class="tab-item" id="tab-history" onclick="switchPage('history')">
+      <div class="tab-icon">📋</div>
+      <div class="tab-label">History</div>
+    </button>
+    <button class="tab-item" id="tab-udhari" onclick="switchPage('udhari')">
+      <div class="tab-icon">🧃</div>
+      <div class="tab-label">Udhari</div>
+    </button>
   </div>
 </div>
 
-<!-- ── SLIDE-UP PANEL ── -->
+<!-- Account History Panel -->
 <div class="panel-overlay" id="panel-overlay" onclick="closePanel()"></div>
 <div class="panel" id="account-panel">
   <div class="panel-handle"></div>
+  <button class="panel-close" onclick="closePanel()">×</button>
   <div class="panel-header">
-    <div>
-      <div class="panel-title" id="panel-title">Account</div>
-      <div class="panel-balance" id="panel-balance">₹0.00</div>
-    </div>
-    <button class="panel-close" onclick="closePanel()">×</button>
+    <div class="panel-title" id="panel-title">Account</div>
+    <div class="panel-balance" id="panel-balance">₹0.00</div>
   </div>
   <div class="panel-body" id="panel-body"></div>
+</div>
+
+<!-- Net Worth Breakdown Panel -->
+<div class="panel-overlay" id="nw-overlay" onclick="closeNwPanel()"></div>
+<div class="panel" id="nw-panel">
+  <div class="panel-handle"></div>
+  <button class="panel-close" onclick="closeNwPanel()">×</button>
+  <div class="panel-header">
+    <div class="panel-title">Net Worth Breakdown</div>
+    <div class="panel-balance" id="nw-panel-total">₹0.00</div>
+  </div>
+  <div class="panel-body" id="nw-panel-body"></div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 }
-</script>
 
-<script>
-// ── ANIMATED LOADING SCREEN ──
-const tips = [
+// Loading animation
+const TIPS = [
   '💳 Checking FamPay balance…',
   '🏦 Syncing bank account…',
   '🧃 Loading udhari entries…',
@@ -383,36 +478,38 @@ const tips = [
   '🔐 Securing your data…',
   '✨ Almost ready…',
 ];
-let tipIdx = 0, barPct = 0;
-const bar = document.getElementById('loading-bar');
-const msg = document.getElementById('loading-msg');
-
-function nextTip() {
-  msg.style.opacity = '0';
-  setTimeout(() => {
-    msg.textContent = tips[tipIdx % tips.length];
-    msg.style.opacity = '1';
-    tipIdx++;
-    barPct = Math.min(barPct + 12, 90);
-    bar.style.width = barPct + '%';
-  }, 300);
+let tipIdx=0, barPct=0;
+const barEl=document.getElementById('loading-bar');
+const msgEl=document.getElementById('loading-msg');
+function nextTip(){
+  msgEl.style.opacity='0';
+  setTimeout(()=>{ msgEl.textContent=TIPS[tipIdx%TIPS.length]; msgEl.style.opacity='1'; tipIdx++; barPct=Math.min(barPct+11,90); barEl.style.width=barPct+'%'; },300);
 }
-
 nextTip();
-const tipInterval = setInterval(nextTip, 1400);
-
-window._fbTimeout = setTimeout(() => {
-  const ls = document.getElementById('loading-screen');
-  if (ls && ls.style.display !== 'none') {
-    document.getElementById('loading-retry').style.display = 'block';
-    msg.textContent = 'Taking too long…';
-    clearInterval(tipInterval);
+const tipInt=setInterval(nextTip,1500);
+window._fbTimeout=setTimeout(()=>{
+  if(document.getElementById('loading-screen').style.display!=='none'){
+    document.getElementById('loading-retry').style.display='block';
+    msgEl.textContent='Taking too long…'; clearInterval(tipInt);
   }
-}, 12000);
+},12000);
+window._stopLoading=()=>{ clearInterval(tipInt); barEl.style.width='100%'; };
 
-window._stopLoading = () => {
-  clearInterval(tipInterval);
-  bar.style.width = '100%';
+// Tab switching
+window.switchPage = id => {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+};
+
+// History filter
+let currentFilter='all';
+window.setFilter = (f,btn) => {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTx();
 };
 </script>
 
@@ -423,168 +520,194 @@ import { getAuth, onAuthStateChanged, signOut as fbSignOut, createUserWithEmailA
 import { getDatabase, ref, onValue, set, push, remove, update }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-window.addEventListener('error', () => {
-  clearTimeout(window._fbTimeout);
-  document.getElementById('loading-retry').style.display = 'block';
-  document.getElementById('loading-msg').textContent = 'Connection failed.';
-});
-window.addEventListener('unhandledrejection', () => {
-  clearTimeout(window._fbTimeout);
-  document.getElementById('loading-retry').style.display = 'block';
-  document.getElementById('loading-msg').textContent = 'Connection failed.';
-});
+window.addEventListener('error',()=>{ clearTimeout(window._fbTimeout); document.getElementById('loading-retry').style.display='block'; });
+window.addEventListener('unhandledrejection',()=>{ clearTimeout(window._fbTimeout); document.getElementById('loading-retry').style.display='block'; });
 
 const app = initializeApp({
-  apiKey: "%%FIREBASE_API_KEY%%",
-  authDomain: "%%FIREBASE_AUTH_DOMAIN%%",
-  databaseURL: "%%FIREBASE_DB_URL%%",
-  projectId: "%%FIREBASE_PROJECT_ID%%",
-  storageBucket: "%%FIREBASE_PROJECT_ID%%.firebasestorage.app",
-  messagingSenderId: "%%FIREBASE_SENDER_ID%%",
-  appId: "%%FIREBASE_APP_ID%%"
+  apiKey:"%%FIREBASE_API_KEY%%",
+  authDomain:"%%FIREBASE_AUTH_DOMAIN%%",
+  databaseURL:"%%FIREBASE_DB_URL%%",
+  projectId:"%%FIREBASE_PROJECT_ID%%",
+  storageBucket:"%%FIREBASE_PROJECT_ID%%.firebasestorage.app",
+  messagingSenderId:"%%FIREBASE_SENDER_ID%%",
+  appId:"%%FIREBASE_APP_ID%%"
 });
-const auth = getAuth(app);
-const db   = getDatabase(app);
+const auth=getAuth(app), db=getDatabase(app);
 
-const DEFAULT_ACCOUNTS = { fam:138, cash:50, bank:2152.75, emergency:600, invest:3517.27 };
-const DEFAULT_UDHARI = [
+const DEFAULT_ACCOUNTS={fam:138,cash:50,bank:2152.75,emergency:600,invest:3517.27};
+const DEFAULT_UDHARI=[
   {name:'Shivam',amount:1000,type:'given'},{name:'Ammi (keep)',amount:600,type:'given'},
   {name:'Ammi (pizza)',amount:100,type:'given'},{name:'Aunty',amount:500,type:'given'},
   {name:'Afsar bhaiya',amount:100,type:'owed'}
 ];
+const ACC_LABELS={fam:'FamPay',cash:'Cash in Hand',bank:'Bank (CBI)',emergency:'Emergency Fund',invest:'Investments'};
+const ACC_ICONS={fam:'💳',cash:'💵',bank:'🏦',emergency:'🧯',invest:'⛏️'};
 
-let cu = null, accountsRef, udhariRef, txRef;
-let localAcc = {...DEFAULT_ACCOUNTS}, localU = [], localTx = [];
+let cu=null, accountsRef, udhariRef, txRef;
+let localAcc={...DEFAULT_ACCOUNTS}, localU=[], localTx=[];
 
-const ACCOUNT_LABELS = {fam:'Fam Account',cash:'Cash in Hand',bank:'Bank · CBI',emergency:'Emergency Fund',invest:'Investments'};
-const fmt = n => { const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-const syncDot = s => { document.getElementById('sync-dot').className='sync-dot '+s; };
-const setErr  = m => { document.getElementById('login-err').textContent = m; };
+const fmt=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const fmtShort=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+(a>=1000?(a/1000).toFixed(1)+'k':a.toFixed(0)); };
+const syncDot=s=>{ document.getElementById('sync-dot').className='sync-dot '+s; };
+const setErr=m=>{ document.getElementById('login-err').textContent=m; };
 
-function render() {
-  ['fam','cash','bank','emergency','invest'].forEach(k => {
-    const el = document.getElementById('amt-'+k);
-    el.textContent = fmt(localAcc[k]||0);
+function render(){
+  ['fam','cash','bank','emergency','invest'].forEach(k=>{
+    const el=document.getElementById('amt-'+k);
+    el.textContent=fmt(localAcc[k]||0);
     el.classList.toggle('negative',(localAcc[k]||0)<0);
   });
-  const uNet = localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
-  const a = localAcc;
-  const nw = (a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0)+(a.invest||0)+uNet;
-  document.getElementById('nw-total').textContent   = fmt(nw);
-  document.getElementById('nw-cash').textContent    = fmt((a.fam||0)+(a.cash||0));
-  document.getElementById('nw-udhari').textContent  = fmt(uNet);
-  document.getElementById('nw-invest').textContent  = fmt(a.invest||0);
-  document.getElementById('udhari-net').textContent = fmt(uNet);
+  const uNet=localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
+  const a=localAcc;
+  const cashTotal=(a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0);
+  const nw=cashTotal+(a.invest||0)+uNet;
+  document.getElementById('nw-total').textContent=fmt(nw);
+  document.getElementById('nw-cash').textContent=fmtShort(cashTotal);
+  document.getElementById('nw-udhari').textContent=fmtShort(uNet);
+  document.getElementById('nw-invest').textContent=fmtShort(a.invest||0);
+  document.getElementById('udhari-net').textContent=fmt(uNet);
+  const given=localU.filter(u=>u.type==='given').reduce((s,u)=>s+u.amount,0);
+  const owed=localU.filter(u=>u.type==='owed').reduce((s,u)=>s+u.amount,0);
+  document.getElementById('udhari-sub').textContent=`Given out: ${fmt(given)}  ·  I owe: ${fmt(owed)}`;
   renderU(); renderTx();
 }
 
-function renderU() {
-  const el = document.getElementById('udhari-list');
-  if (!localU.length) { el.innerHTML='<div class="empty">No entries yet</div>'; return; }
-  el.innerHTML = localU.map(u=>`
-    <div class="udhari-row">
-      <span class="udhari-person">${u.name}</span>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span class="udhari-amt ${u.type==='given'?'plus':'minus'}">${u.type==='given'?'+':'-'}${fmt(u.amount)}</span>
-        <button onclick="window._dU('${u._key}')" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;">✕</button>
+function renderU(){
+  const el=document.getElementById('udhari-list');
+  if(!localU.length){ el.innerHTML='<div class="empty">No udhari entries yet</div>'; return; }
+  el.innerHTML=localU.map(u=>`
+    <div class="udhari-item">
+      <div>
+        <div class="udhari-person-name">${u.name}</div>
+        <div class="udhari-person-type">${u.type==='given'?'💚 I gave them':'❤️ I owe them'}</div>
+      </div>
+      <div class="udhari-item-right">
+        <div class="udhari-item-amt ${u.type}">${u.type==='given'?'+':'-'}${fmt(u.amount)}</div>
+        <button class="udhari-del" onclick="window._dU('${u._key}')">✕</button>
       </div>
     </div>`).join('');
 }
 
-function renderTx() {
-  const el = document.getElementById('tx-list');
-  if (!localTx.length) { el.innerHTML='<div class="empty">No transactions yet</div>'; return; }
-  el.innerHTML = [...localTx].reverse().map(tx => {
-    const iE=tx.type==='expense', iI=tx.type==='income';
-    const sign=iE?'-':iI?'+':'↔', cls=iE?'expense':iI?'income':'';
-    const meta=tx.type==='transfer'?`${ACCOUNT_LABELS[tx.account]} → ${ACCOUNT_LABELS[tx.toAccount]}`:ACCOUNT_LABELS[tx.account];
+window.renderTx = function(){
+  const el=document.getElementById('tx-list');
+  let txs=[...localTx].reverse();
+  if(currentFilter!=='all') txs=txs.filter(t=>t.type===currentFilter);
+  if(!txs.length){ el.innerHTML=`<div class="empty">No ${currentFilter==='all'?'':currentFilter+' '}transactions yet</div>`; return; }
+  el.innerHTML=txs.map(tx=>{
+    const iE=tx.type==='expense',iI=tx.type==='income',iT=tx.type==='transfer';
+    const sign=iE?'-':iI?'+':'↔';
+    const cls=iE?'expense':iI?'income':'transfer';
+    const meta=iT?`${ACC_LABELS[tx.account]} → ${ACC_LABELS[tx.toAccount]}`:ACC_LABELS[tx.account];
     return `<div class="tx-item">
-      <div class="tx-left"><div class="tx-desc">${tx.desc||'—'}</div><div class="tx-meta">${meta} · ${tx.date}</div></div>
+      <div class="tx-left">
+        <div class="tx-desc">${tx.desc||'—'}</div>
+        <div class="tx-meta">${meta} · ${tx.date}</div>
+      </div>
       <div class="tx-right">
+        <span class="tx-badge ${cls}">${tx.type}</span>
         <span class="tx-amount ${cls}">${sign}${fmt(tx.amount)}</span>
         <button class="tx-del" onclick="window._dT('${tx._key}','${tx.type}','${tx.account}','${tx.toAccount||''}',${tx.amount})">×</button>
       </div>
     </div>`;
   }).join('');
-}
+};
 
-// ── ACCOUNT PANEL ──
-window.openPanel = (accountKey) => {
-  const label = ACCOUNT_LABELS[accountKey];
-  const balance = localAcc[accountKey] || 0;
-
-  // Filter transactions for this account (as from OR to account)
-  const acTx = [...localTx].reverse().filter(tx =>
-    tx.account === accountKey || tx.toAccount === accountKey
-  );
-
-  document.getElementById('panel-title').textContent = label;
-  document.getElementById('panel-balance').textContent = fmt(balance);
-
-  const body = document.getElementById('panel-body');
-  if (!acTx.length) {
-    body.innerHTML = '<div class="panel-empty">No transactions yet for this account</div>';
-  } else {
-    body.innerHTML = acTx.map(tx => {
-      let sign, cls, amt;
-      if (tx.type === 'transfer') {
-        if (tx.account === accountKey) {
-          sign = '↗'; cls = 'expense'; // sent out
-        } else {
-          sign = '↙'; cls = 'income'; // received
-        }
-        amt = fmt(tx.amount);
-      } else {
-        sign = tx.type === 'expense' ? '-' : '+';
-        cls = tx.type === 'expense' ? 'expense' : 'income';
-        amt = fmt(tx.amount);
-      }
-      const transferNote = tx.type === 'transfer'
-        ? (tx.account === accountKey ? ` → ${ACCOUNT_LABELS[tx.toAccount]}` : ` ← ${ACCOUNT_LABELS[tx.account]}`)
-        : '';
-      return `<div class="panel-tx-item">
-        <div class="panel-tx-left">
-          <div class="panel-tx-desc">${tx.desc||'—'}${transferNote}</div>
-          <div class="panel-tx-date">${tx.date}</div>
-        </div>
-        <span class="panel-tx-amt ${cls}">${sign}${amt}</span>
+// Account slide-up panel
+window.openAccPanel = accKey => {
+  const label=ACC_LABELS[accKey], icon=ACC_ICONS[accKey];
+  const bal=localAcc[accKey]||0;
+  const txs=[...localTx].reverse().filter(t=>t.account===accKey||t.toAccount===accKey);
+  document.getElementById('panel-title').textContent=icon+' '+label;
+  document.getElementById('panel-balance').textContent=fmt(bal);
+  const body=document.getElementById('panel-body');
+  if(!txs.length){ body.innerHTML='<div class="empty" style="padding:40px">No transactions for this account yet</div>'; }
+  else {
+    body.innerHTML=txs.map(tx=>{
+      let sign,cls;
+      if(tx.type==='transfer'){ sign=tx.account===accKey?'↗':'↙'; cls='transfer'; }
+      else{ sign=tx.type==='expense'?'-':'+'; cls=tx.type; }
+      const note=tx.type==='transfer'?(tx.account===accKey?`→ ${ACC_LABELS[tx.toAccount]}`:`← ${ACC_LABELS[tx.account]}`):'';
+      return `<div class="panel-tx">
+        <div><div class="panel-tx-desc">${tx.desc||'—'} <span style="color:var(--text3);font-size:10px;">${note}</span></div><div class="panel-tx-date">${tx.date}</div></div>
+        <span class="panel-tx-amt ${cls}">${sign}${fmt(tx.amount)}</span>
       </div>`;
     }).join('');
   }
-
   document.getElementById('panel-overlay').classList.add('open');
   document.getElementById('account-panel').classList.add('open');
-  document.body.style.overflow = 'hidden';
+  document.body.style.overflow='hidden';
 };
-
-window.closePanel = () => {
+window.closePanel=()=>{
   document.getElementById('panel-overlay').classList.remove('open');
   document.getElementById('account-panel').classList.remove('open');
-  document.body.style.overflow = '';
+  document.body.style.overflow='';
 };
 
-function initListeners(uid) {
-  accountsRef = ref(db,`users/${uid}/accounts`);
-  udhariRef   = ref(db,`users/${uid}/udhari`);
-  txRef       = ref(db,`users/${uid}/transactions`);
-  onValue(accountsRef, s => { localAcc=s.val()||{...DEFAULT_ACCOUNTS}; syncDot('synced'); render(); });
-  onValue(udhariRef,   s => { const v=s.val(); localU=v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];render();});
-  onValue(txRef,       s => { const v=s.val(); localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];render();});
+// Net Worth breakdown panel
+window.openNwPanel=()=>{
+  const a=localAcc;
+  const uNet=localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
+  const nw=(a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0)+(a.invest||0)+uNet;
+  document.getElementById('nw-panel-total').textContent=fmt(nw);
+  const items=[
+    {icon:'💳',name:'FamPay',val:a.fam||0},
+    {icon:'💵',name:'Cash in Hand',val:a.cash||0},
+    {icon:'🏦',name:'Bank (CBI)',sub:'A/C ending 8466',val:a.bank||0},
+    {icon:'🧯',name:'Emergency Fund',val:a.emergency||0},
+    {icon:'⛏️',name:'Investments',sub:'DigiGold · Lenden · PhonePay Gold',val:a.invest||0},
+    {icon:'🧃',name:'Udhari (Net)',sub:'Money given out minus owed',val:uNet},
+  ];
+  const maxAbs=Math.max(...items.map(i=>Math.abs(i.val)),1);
+  document.getElementById('nw-panel-body').innerHTML=items.map(item=>{
+    const pct=Math.round((Math.abs(item.val)/maxAbs)*100);
+    const cls=item.val>=0?'pos':'neg';
+    return `<div class="nw-panel-item">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="nw-panel-icon">${item.icon}</span>
+          <div>
+            <div class="nw-panel-name">${item.name}</div>
+            ${item.sub?`<div class="nw-panel-sub">${item.sub}</div>`:''}
+          </div>
+        </div>
+        <div class="nw-panel-bar" style="margin-left:26px;margin-top:6px;">
+          <div class="nw-panel-bar-fill" style="width:${pct}%;background:${item.val>=0?'var(--gold)':'var(--red)'};"></div>
+        </div>
+      </div>
+      <div class="nw-panel-amt ${cls}" style="margin-left:12px;">${fmt(item.val)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('nw-overlay').classList.add('open');
+  document.getElementById('nw-panel').classList.add('open');
+  document.body.style.overflow='hidden';
+};
+window.closeNwPanel=()=>{
+  document.getElementById('nw-overlay').classList.remove('open');
+  document.getElementById('nw-panel').classList.remove('open');
+  document.body.style.overflow='';
+};
+
+function initListeners(uid){
+  accountsRef=ref(db,`users/${uid}/accounts`);
+  udhariRef=ref(db,`users/${uid}/udhari`);
+  txRef=ref(db,`users/${uid}/transactions`);
+  onValue(accountsRef,s=>{ localAcc=s.val()||{...DEFAULT_ACCOUNTS}; syncDot('synced'); render(); });
+  onValue(udhariRef,s=>{ const v=s.val(); localU=v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];render();});
+  onValue(txRef,s=>{ const v=s.val(); localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];render();});
 }
 
-onAuthStateChanged(auth, user => {
-  clearTimeout(window._fbTimeout);
-  window._stopLoading();
+onAuthStateChanged(auth,user=>{
+  clearTimeout(window._fbTimeout); window._stopLoading();
   document.getElementById('loading-screen').style.display='none';
-  if (user) {
-    cu = user;
-    document.getElementById('user-info').textContent = user.email;
-    document.getElementById('app-screen').style.display='block';
+  if(user){
+    cu=user;
+    document.getElementById('app-screen').style.display='flex';
+    document.getElementById('app-screen').style.flexDirection='column';
     document.getElementById('login-screen').style.display='none';
-    onValue(ref(db,`users/${user.uid}/accounts`), async s => {
-      if (!s.exists()) {
-        await set(ref(db,`users/${user.uid}/accounts`), DEFAULT_ACCOUNTS);
-        await set(ref(db,`users/${user.uid}/udhari`), DEFAULT_UDHARI.reduce((a,u,i)=>({...a,['u'+i]:u}),{}));
+    onValue(ref(db,`users/${user.uid}/accounts`),async s=>{
+      if(!s.exists()){
+        await set(ref(db,`users/${user.uid}/accounts`),DEFAULT_ACCOUNTS);
+        await set(ref(db,`users/${user.uid}/udhari`),DEFAULT_UDHARI.reduce((a,u,i)=>({...a,['u'+i]:u}),{}));
       }
     },{onlyOnce:true});
     initListeners(user.uid);
@@ -595,53 +718,42 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-window.switchTab = t => {
+window.switchTab=t=>{
   document.getElementById('form-login').style.display=t==='login'?'block':'none';
   document.getElementById('form-reg').style.display=t==='reg'?'block':'none';
   document.getElementById('tab-login').classList.toggle('active',t==='login');
   document.getElementById('tab-reg').classList.toggle('active',t==='reg');
   setErr('');
 };
-
-window.doLogin = async () => {
+window.doLogin=async()=>{
   const email=document.getElementById('l-email').value.trim();
   const pass=document.getElementById('l-pass').value;
-  if (!email||!pass){setErr('Enter email and password');return;}
+  if(!email||!pass){setErr('Enter email and password');return;}
   setErr('');
-  try { await signInWithEmailAndPassword(auth,email,pass); }
-  catch(e){
-    const m={'auth/user-not-found':'No account with this email.','auth/wrong-password':'Wrong password.','auth/invalid-email':'Invalid email.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts. Try later.'};
-    setErr(m[e.code]||e.message);
-  }
+  try{ await signInWithEmailAndPassword(auth,email,pass); }
+  catch(e){ const m={'auth/user-not-found':'No account found.','auth/wrong-password':'Wrong password.','auth/invalid-email':'Invalid email.','auth/invalid-credential':'Wrong email or password.','auth/too-many-requests':'Too many attempts.'}; setErr(m[e.code]||e.message); }
 };
-
-window.doRegister = async () => {
+window.doRegister=async()=>{
   const email=document.getElementById('r-email').value.trim();
   const pass=document.getElementById('r-pass').value;
   const pass2=document.getElementById('r-pass2').value;
   if(!email||!pass){setErr('Enter email and password');return;}
   if(pass!==pass2){setErr('Passwords do not match');return;}
-  if(pass.length<6){setErr('Password must be at least 6 characters');return;}
+  if(pass.length<6){setErr('Min 6 characters');return;}
   setErr('');
-  try { await createUserWithEmailAndPassword(auth,email,pass); toast('Account created! Welcome 🎉'); }
-  catch(e){
-    const m={'auth/email-already-in-use':'Email already registered. Sign in instead.','auth/invalid-email':'Invalid email.','auth/weak-password':'Password too weak.'};
-    setErr(m[e.code]||e.message);
-  }
+  try{ await createUserWithEmailAndPassword(auth,email,pass); toast('Account created! Welcome 🎉'); }
+  catch(e){ const m={'auth/email-already-in-use':'Already registered.','auth/invalid-email':'Invalid email.','auth/weak-password':'Weak password.'}; setErr(m[e.code]||e.message); }
 };
-
-window.doForgot = async () => {
+window.doForgot=async()=>{
   const email=document.getElementById('l-email').value.trim();
   if(!email){setErr('Enter your email first');return;}
-  try { await sendPasswordResetEmail(auth,email); setErr(''); toast('Reset link sent to '+email); }
-  catch(e){ setErr('Could not send reset email. Check address.'); }
+  try{ await sendPasswordResetEmail(auth,email); setErr(''); toast('Reset link sent!'); }
+  catch(e){ setErr('Could not send reset email.'); }
 };
+window.doSignOut=async()=>{ await fbSignOut(auth); toast('Signed out'); };
 
-window.doSignOut = async () => { await fbSignOut(auth); toast('Signed out'); };
-
-window._dU = async key => { await remove(ref(db,`users/${cu.uid}/udhari/${key}`)); toast('Entry removed'); };
-
-window._dT = async (key,type,account,toAccount,amount) => {
+window._dU=async key=>{ await remove(ref(db,`users/${cu.uid}/udhari/${key}`)); toast('Entry removed'); };
+window._dT=async(key,type,account,toAccount,amount)=>{
   syncDot('syncing');
   const upd={};
   upd[`users/${cu.uid}/transactions/${key}`]=null;
@@ -654,8 +766,7 @@ window._dT = async (key,type,account,toAccount,amount) => {
   }
   await update(ref(db),upd); toast('Transaction removed');
 };
-
-window.addUdhari = async () => {
+window.addUdhari=async()=>{
   const name=document.getElementById('u-name').value.trim();
   const amount=parseFloat(document.getElementById('u-amt').value);
   const type=document.getElementById('u-type').value;
@@ -663,10 +774,9 @@ window.addUdhari = async () => {
   await push(udhariRef,{name,amount,type});
   document.getElementById('u-name').value='';
   document.getElementById('u-amt').value='';
-  toast('Udhari entry added');
+  toast('Udhari entry added ✓');
 };
-
-window.addTransaction = async () => {
+window.addTransaction=async()=>{
   const type=document.getElementById('f-type').value;
   const account=document.getElementById('f-account').value;
   const toAcc=document.getElementById('f-to').value;
@@ -691,32 +801,21 @@ window.addTransaction = async () => {
   document.getElementById('f-desc').value='';
   document.getElementById('f-amt').value='';
   toast('Recorded ✓');
+  switchPage('home');
 };
-
-window.clearHistory = async () => {
+window.clearHistory=async()=>{
   if(!confirm('Clear all history? Balances stay the same.'))return;
   await set(txRef,null); toast('History cleared');
 };
-
-window.toggleAdd = () => {
-  document.getElementById('add-body').classList.toggle('open');
-  document.getElementById('add-toggle').classList.toggle('open');
+window.onTypeChange=()=>{
+  document.getElementById('to-field').style.display=document.getElementById('f-type').value==='transfer'?'flex':'none';
 };
-window.toggleHistory = () => {
-  document.getElementById('history-body').classList.toggle('open');
-  document.getElementById('history-toggle').classList.toggle('open');
-};
-window.onTypeChange = () => {
-  document.getElementById('to-field').style.display=document.getElementById('f-type').value==='transfer'?'block':'none';
-};
-window.setQ = (d,a) => {
+window.setQ=(d,a)=>{
   document.getElementById('f-desc').value=d;
   document.getElementById('f-amt').value=a;
-  if(!document.getElementById('add-body').classList.contains('open'))window.toggleAdd();
 };
-
 let _tt;
-window.toast = msg => {
+window.toast=msg=>{
   const el=document.getElementById('toast');
   el.textContent=msg; el.classList.add('show');
   clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2500);
