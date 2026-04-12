@@ -332,12 +332,17 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
   </div>
 
-  <div class="history-section">
-    <div class="history-header">
-      <div class="history-title">Transaction History</div>
-      <button class="btn-clear" onclick="clearHistory()">Clear all</button>
+  <div class="add-section" style="margin-top:10px;">
+    <div class="add-header" onclick="toggleHistory()">
+      <div class="add-header-title">📋 Transaction History</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <button onclick="event.stopPropagation();clearHistory()" style="background:none;border:none;color:var(--text3);font-size:11px;font-family:'Syne',sans-serif;cursor:pointer;">Clear all</button>
+        <div class="add-toggle" id="history-toggle">+</div>
+      </div>
     </div>
-    <div class="tx-list" id="tx-list"><div class="empty">Loading…</div></div>
+    <div class="add-body" id="history-body">
+      <div class="tx-list" id="tx-list"><div class="empty">Loading…</div></div>
+    </div>
   </div>
 </div>
 
@@ -696,6 +701,10 @@ window.clearHistory = async () => {
 window.toggleAdd = () => {
   document.getElementById('add-body').classList.toggle('open');
   document.getElementById('add-toggle').classList.toggle('open');
+};
+window.toggleHistory = () => {
+  document.getElementById('history-body').classList.toggle('open');
+  document.getElementById('history-toggle').classList.toggle('open');
 };
 window.onTypeChange = () => {
   document.getElementById('to-field').style.display=document.getElementById('f-type').value==='transfer'?'block':'none';
