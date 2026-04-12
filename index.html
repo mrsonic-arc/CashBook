@@ -559,8 +559,8 @@ function render(){
   });
   const uNet=localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
   const a=localAcc;
-  const cashTotal=(a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0);
-  const nw=cashTotal+(a.invest||0)+uNet;
+  const cashTotal=(a.fam||0)+(a.cash||0);
+  const nw=(a.fam||0)+(a.cash||0)+(a.bank||0)+(a.emergency||0)+(a.invest||0)+uNet;
   document.getElementById('nw-total').textContent=fmt(nw);
   document.getElementById('nw-cash').textContent=fmtShort(cashTotal);
   document.getElementById('nw-udhari').textContent=fmtShort(uNet);
