@@ -223,7 +223,6 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 .pin-btn:active { background:var(--surface2); border-color:var(--gold); transform:scale(0.93); }
 .pin-btn.gold { background:#c8a84b; border-color:#c8a84b; color:#000; }
 .pin-btn.del { background:none; border:none; font-size:20px; }
-.pin-btn.bio { background:none; border:none; font-size:26px; } /* New Bio icon */
 .pin-btn-sub { font-size:8px; color:var(--text3); letter-spacing:0.08em; font-weight:400; }
 .pin-forgot { margin-top:24px; font-size:12px; color:var(--text3); cursor:pointer; text-decoration:underline; }
 
@@ -236,6 +235,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 </head>
 <body>
 
+<!-- LOADING -->
 <div id="loading-screen">
   <div class="loading-logo">💰</div>
   <div style="font-size:26px;font-weight:700;color:#c8a84b;font-family:'Syne',sans-serif;letter-spacing:-0.02em;">Cashonic</div>
@@ -252,6 +252,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
   </div>
 </div>
 
+<!-- PIN LOCK -->
 <div id="pin-screen">
   <div class="pin-logo">💰</div>
   <div class="pin-app-name">Cashonic</div>
@@ -274,12 +275,14 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     <button class="pin-btn" onclick="pinPress('7')">7<div class="pin-btn-sub">PQRS</div></button>
     <button class="pin-btn" onclick="pinPress('8')">8<div class="pin-btn-sub">TUV</div></button>
     <button class="pin-btn" onclick="pinPress('9')">9<div class="pin-btn-sub">WXYZ</div></button>
-    <button class="pin-btn bio" id="pin-bio-btn" onclick="tryBiometricUnlock()">🧬</button> <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn" style="opacity:0;pointer-events:none;"></button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
     <button class="pin-btn del" onclick="pinDel()">&#x232B;</button>
   </div>
   <div class="pin-forgot" id="pin-forgot-btn" onclick="pinForgot()" style="display:none;">Forgot PIN? Sign out and log in again</div>
 </div>
 
+<!-- LOGIN -->
 <div id="login-screen" style="display:none;flex-direction:column;">
   <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px 16px;">
     <div class="login-box">
@@ -308,7 +311,9 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
   </div>
 </div>
 
+<!-- APP -->
 <div id="app-screen">
+  <!-- Header -->
   <div class="app-header">
     <div class="app-header-left">
       <div class="app-logo">💰</div>
@@ -318,6 +323,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     <button class="btn-signout" onclick="doSignOut()">Sign out</button>
   </div>
 
+  <!-- ── HOME TAB ── -->
   <div class="page active" id="page-home">
     <div class="networth-card">
       <div class="nw-label">Total Net Worth</div>
@@ -371,6 +377,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
   </div>
 
+  <!-- ── ADD TAB ── -->
   <div class="page" id="page-add">
     <div class="add-page-wrap">
       <div class="add-page-title">Add Transaction</div>
@@ -425,6 +432,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
   </div>
 
+  <!-- ── HISTORY TAB ── -->
   <div class="page" id="page-history">
     <div class="history-page-wrap">
       <div class="history-filters">
@@ -438,6 +446,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
   </div>
 
+  <!-- ── UDHARI TAB ── -->
   <div class="page" id="page-udhari">
     <div class="udhari-page-wrap">
       <div class="udhari-summary">
@@ -461,6 +470,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
   </div>
 
+  <!-- Bottom Tab Bar -->
   <div class="tab-bar">
     <button class="tab-item active" id="tab-home" onclick="switchPage('home')">
       <div class="tab-icon">🏠</div>
@@ -481,6 +491,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
   </div>
 </div>
 
+<!-- Account History Panel -->
 <div class="panel-overlay" id="panel-overlay" onclick="closePanel()"></div>
 <div class="panel" id="account-panel">
   <div class="panel-handle"></div>
@@ -492,6 +503,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
   <div class="panel-body" id="panel-body"></div>
 </div>
 
+<!-- Net Worth Breakdown Panel -->
 <div class="panel-overlay" id="nw-overlay" onclick="closeNwPanel()"></div>
 <div class="panel" id="nw-panel">
   <div class="panel-handle"></div>
@@ -545,122 +557,38 @@ window.switchPage = id => {
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
+  // Reset inactivity timer on page switch
   resetInactivity();
 };
 
-// ── PIN & BIOMETRIC SYSTEM ──
+// ── PIN LOCK SYSTEM ──
 const PIN_KEY = 'cashonic_pin';
-const BIO_KEY = 'cashonic_bio_enabled'; // Track if biometric is enabled
-const PIN_TIMEOUT = 5 * 60 * 1000; 
+const PIN_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 let pinBuffer = '';
-let pinMode = 'enter'; 
+let pinMode = 'enter'; // 'setup' | 'enter' | 'confirm'
 let pinSetupFirst = '';
 let inactivityTimer = null;
 let appUnlocked = false;
 
 function getStoredPin() { try { return localStorage.getItem(PIN_KEY); } catch(e){ return null; } }
 function storePin(p) { try { localStorage.setItem(PIN_KEY, p); } catch(e){} }
-function clearPin() { try { localStorage.removeItem(PIN_KEY); localStorage.removeItem(BIO_KEY); } catch(e){} }
+function clearPin() { try { localStorage.removeItem(PIN_KEY); } catch(e){} }
 
-// New Biometric Functions
-async function canUseBiometrics() {
-  const isEnabled = localStorage.getItem(BIO_KEY) === 'true';
-  const isAvailable = window.PublicKeyCredential && 
-                      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  return isEnabled && isAvailable;
-}
-
-window.tryBiometricUnlock = async () => {
-  try {
-    const challenge = new Uint8Array(32);
-    window.crypto.getRandomValues(challenge);
-    
-    // Simple WebAuthn verification
-    const credential = await navigator.credentials.get({
-      publicKey: {
-        challenge,
-        timeout: 60000,
-        userVerification: "required",
-        rpId: window.location.hostname === 'localhost' ? 'localhost' : window.location.hostname
-      }
-    });
-
-    if (credential) {
-      hidePinScreen();
-      toast('Welcome back! ⚡');
-    }
-  } catch (err) {
-    console.log("Biometric failed", err);
-  }
-};
-
-async function offerBiometricSetup() {
-  if (localStorage.getItem(BIO_KEY) === 'true') return;
-  
-  const isAvailable = window.PublicKeyCredential && 
-                      await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-  
-  if (isAvailable && confirm('Enable Fingerprint / Face ID for faster access?')) {
-    try {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      
-      const credential = await navigator.credentials.create({
-        publicKey: {
-          challenge,
-          rp: { name: "Cashonic" },
-          user: {
-            id: Uint8Array.from("user" + Date.now(), c => c.charCodeAt(0)),
-            name: "user",
-            displayName: "Cashonic User"
-          },
-          pubKeyCredParams: [{ alg: -7, type: "public-key" }],
-          authenticatorSelection: { userVerification: "required" },
-          timeout: 60000
-        }
-      });
-      
-      if (credential) {
-        localStorage.setItem(BIO_KEY, 'true');
-        toast('Biometrics enabled! 🧬');
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  }
-}
-
-async function showPinScreen(mode) {
+function showPinScreen(mode) {
   pinMode = mode;
   pinBuffer = '';
   pinSetupFirst = '';
   updatePinDots();
   document.getElementById('pin-err').textContent = '';
   document.getElementById('pin-screen').classList.add('show');
-  
-  const bioBtn = document.getElementById('pin-bio-btn');
-  
   if (mode === 'setup') {
     document.getElementById('pin-label').textContent = 'Set a new PIN';
     document.getElementById('pin-subtitle').textContent = 'Choose a 4-digit PIN to protect your data';
     document.getElementById('pin-forgot-btn').style.display = 'none';
-    bioBtn.style.opacity = '0';
-    bioBtn.style.pointerEvents = 'none';
   } else {
     document.getElementById('pin-label').textContent = 'Enter PIN';
     document.getElementById('pin-subtitle').textContent = 'Personal Finance Tracker';
     document.getElementById('pin-forgot-btn').style.display = 'block';
-    
-    // Show bio button and auto-trigger if enabled
-    const bioAvailable = await canUseBiometrics();
-    if (bioAvailable) {
-      bioBtn.style.opacity = '1';
-      bioBtn.style.pointerEvents = 'all';
-      setTimeout(tryBiometricUnlock, 300);
-    } else {
-      bioBtn.style.opacity = '0';
-      bioBtn.style.pointerEvents = 'none';
-    }
   }
 }
 
@@ -704,13 +632,13 @@ window.pinPress = digit => {
         pinBuffer = '';
         updatePinDots();
         document.getElementById('pin-label').textContent = 'Confirm PIN';
+        document.getElementById('pin-err').textContent = '';
         pinMode = 'confirm';
       } else if (pinMode === 'confirm') {
         if (pinBuffer === pinSetupFirst) {
           storePin(pinBuffer);
           hidePinScreen();
           toast('PIN set successfully 🔐');
-          offerBiometricSetup();
         } else {
           pinShakeError('PINs do not match. Try again.');
           pinMode = 'setup';
@@ -720,10 +648,10 @@ window.pinPress = digit => {
           }, 700);
         }
       } else {
+        // enter mode
         const stored = getStoredPin();
         if (pinBuffer === stored) {
           hidePinScreen();
-          offerBiometricSetup();
         } else {
           pinShakeError('Wrong PIN. Try again.');
         }
@@ -748,6 +676,7 @@ window.pinForgot = () => {
   }
 };
 
+// Inactivity — lock after 5 minutes
 function resetInactivity() {
   clearTimeout(inactivityTimer);
   if (!appUnlocked) return;
@@ -760,19 +689,23 @@ function resetInactivity() {
   }, PIN_TIMEOUT);
 }
 
+// Reset timer on any user interaction
 ['touchstart','touchend','click','keydown'].forEach(ev => {
   document.addEventListener(ev, resetInactivity, { passive: true });
 });
 
+// Called after Firebase login confirmed
 window.initPin = () => {
   const stored = getStoredPin();
   if (stored) {
     showPinScreen('enter');
   } else {
+    // No PIN set yet — ask user to set one
     showPinScreen('setup');
   }
 };
 
+// History filter
 let currentFilter='all';
 window.setFilter = (f,btn) => {
   currentFilter=f;
@@ -823,10 +756,8 @@ const setErr=m=>{ document.getElementById('login-err').textContent=m; };
 function render(){
   ['fam','cash','bank','emergency','invest'].forEach(k=>{
     const el=document.getElementById('amt-'+k);
-    if(el){
-        el.textContent=fmt(localAcc[k]||0);
-        el.classList.toggle('negative',(localAcc[k]||0)<0);
-    }
+    el.textContent=fmt(localAcc[k]||0);
+    el.classList.toggle('negative',(localAcc[k]||0)<0);
   });
   const uNet=localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
   const a=localAcc;
@@ -883,6 +814,7 @@ window.renderTx = function(){
   }).join('');
 };
 
+// Account slide-up panel
 window.openAccPanel = accKey => {
   const label=ACC_LABELS[accKey], icon=ACC_ICONS[accKey];
   const bal=localAcc[accKey]||0;
@@ -913,6 +845,7 @@ window.closePanel=()=>{
   document.body.style.overflow='';
 };
 
+// Net Worth breakdown panel
 window.openNwPanel=()=>{
   const a=localAcc;
   const uNet=localU.reduce((s,u)=>s+(u.type==='given'?u.amount:-u.amount),0);
@@ -980,6 +913,7 @@ onAuthStateChanged(auth,user=>{
       }
     },{onlyOnce:true});
     initListeners(user.uid);
+    // Show PIN screen after login
     window.initPin();
   } else {
     cu=null;
