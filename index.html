@@ -67,7 +67,10 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 .sync-dot { width:7px; height:7px; border-radius:50%; background:var(--text3); transition:background 0.3s; }
 .sync-dot.synced { background:var(--green); }
 .sync-dot.syncing { background:var(--gold); animation:pulse 1s infinite; }
+.sync-dot.offline { background:var(--text3); }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.offline-banner { background:rgba(200,168,75,0.1); border-bottom:1px solid var(--gold-dim); padding:6px 16px; font-size:11px; color:var(--gold-dim); text-align:center; display:none; }
+.offline-banner.show { display:block; }
 .btn-signout { background:none; border:1px solid var(--border); color:var(--text3); padding:5px 11px; border-radius:var(--radius-xs); font-size:11px; font-family:'Syne',sans-serif; cursor:pointer; }
 
 /* ── PAGE CONTENT ── */
@@ -325,6 +328,8 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     </div>
     <button class="btn-signout" onclick="doSignOut()">Sign out</button>
   </div>
+  <!-- Offline Banner -->
+  <div class="offline-banner" id="offline-banner">📡 Offline — showing cached data. Changes will sync when back online.</div>
 
   <!-- ── HOME TAB ── -->
   <div class="page active" id="page-home">
@@ -560,9 +565,25 @@ window.switchPage = id => {
   document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.getElementById('tab-'+id).classList.add('active');
-  // Reset inactivity timer on page switch
   resetInactivity();
 };
+
+// ── ONLINE/OFFLINE DETECTION ──
+let isOnline = navigator.onLine;
+function updateOnlineStatus() {
+  isOnline = navigator.onLine;
+  const banner = document.getElementById('offline-banner');
+  const dot = document.getElementById('sync-dot');
+  if (isOnline) {
+    banner.classList.remove('show');
+    dot.className = 'sync-dot synced';
+  } else {
+    banner.classList.add('show');
+    dot.className = 'sync-dot offline';
+  }
+}
+window.addEventListener('online', () => { updateOnlineStatus(); toast('Back online — syncing… ✓'); });
+window.addEventListener('offline', () => { updateOnlineStatus(); toast('You\'re offline. Data saved locally.'); });
 
 // ── PIN LOCK SYSTEM ──
 const PIN_KEY = 'cashonic_pin';
@@ -594,7 +615,6 @@ function showPinScreen(mode) {
     document.getElementById('pin-subtitle').textContent = 'Personal Finance Tracker';
     fpBtn.style.display = 'flex';
     forgotBtn.style.display = 'block';
-    // Auto-try fingerprint when entering PIN
     setTimeout(tryFingerprint, 400);
   }
 }
@@ -622,9 +642,8 @@ function pinShakeError(msg) {
   setTimeout(() => { pinBuffer = ''; updatePinDots(); }, 600);
 }
 
-// Fingerprint / biometric auth
 window.tryFingerprint = async () => {
-  if (!window.PublicKeyCredential) return; // not supported
+  if (!window.PublicKeyCredential) return;
   try {
     const result = await navigator.credentials.get({
       publicKey: {
@@ -636,7 +655,6 @@ window.tryFingerprint = async () => {
     });
     if (result) hidePinScreen();
   } catch(e) {
-    // Biometric failed or cancelled — user can enter PIN manually
     if (e.name !== 'NotAllowedError') {
       document.getElementById('pin-err').textContent = 'Biometric failed. Enter PIN.';
     }
@@ -696,7 +714,6 @@ window.pinForgot = () => {
   }
 };
 
-// Always lock when app comes to foreground
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && appUnlocked) {
     const stored = getStoredPin();
@@ -707,7 +724,6 @@ document.addEventListener('visibilitychange', () => {
   }
 });
 
-// Called after Firebase login confirmed
 window.initPin = () => {
   const stored = getStoredPin();
   if (stored) {
@@ -716,6 +732,21 @@ window.initPin = () => {
     showPinScreen('setup');
   }
 };
+
+// Inactivity timer (referenced by switchPage)
+let _inactivityTimer;
+window.resetInactivity = () => {
+  clearTimeout(_inactivityTimer);
+  _inactivityTimer = setTimeout(() => {
+    const stored = getStoredPin();
+    if (stored && appUnlocked) {
+      appUnlocked = false;
+      showPinScreen('enter');
+    }
+  }, 5 * 60 * 1000); // 5 min
+};
+document.addEventListener('touchstart', resetInactivity, { passive: true });
+document.addEventListener('click', resetInactivity);
 
 // History filter
 let currentFilter='all';
@@ -731,11 +762,11 @@ window.setFilter = (f,btn) => {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut as fbSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, onValue, set, push, remove, update }
+import { getDatabase, ref, onValue, set, push, remove, update, enableIndexedDbPersistence }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-window.addEventListener('error',()=>{ clearTimeout(window._fbTimeout); document.getElementById('loading-retry').style.display='block'; });
-window.addEventListener('unhandledrejection',()=>{ clearTimeout(window._fbTimeout); document.getElementById('loading-retry').style.display='block'; });
+window.addEventListener('error',()=>{ clearTimeout(window._fbTimeout); });
+window.addEventListener('unhandledrejection',()=>{ clearTimeout(window._fbTimeout); });
 
 const app = initializeApp({
   apiKey:"%%FIREBASE_API_KEY%%",
@@ -758,27 +789,25 @@ const ACC_LABELS={fam:'FamPay',cash:'Cash in Hand',bank:'Bank (CBI)',emergency:'
 const ACC_ICONS={fam:'💳',cash:'💵',bank:'🏦',emergency:'🧯',invest:'⛏️'};
 
 let cu=null, accountsRef, udhariRef, txRef;
-// Load cached balances from localStorage so offline calcs use latest known values
-function loadCachedAcc() {
-  try {
-    const cached = localStorage.getItem('cashonic_acc');
-    return cached ? JSON.parse(cached) : {...DEFAULT_ACCOUNTS};
-  } catch(e) { return {...DEFAULT_ACCOUNTS}; }
-}
-let localAcc=loadCachedAcc(), localU=[], localTx=[];
-function loadCachedTx() { try { const c=localStorage.getItem('cashonic_tx'); return c?JSON.parse(c):[]; } catch(e){return [];} }
-function loadCachedUdhari() { try { const c=localStorage.getItem('cashonic_udhari'); return c?JSON.parse(c):[]; } catch(e){return [];} }
-localTx = loadCachedTx();
-localU = loadCachedUdhari();
+
+// ── CACHE HELPERS ──
+function saveCache(key, data) { try { localStorage.setItem(key, JSON.stringify(data)); } catch(e){} }
+function loadCache(key, fallback) { try { const c=localStorage.getItem(key); return c ? JSON.parse(c) : fallback; } catch(e){ return fallback; } }
+
+// ── LOCAL STATE — always initialized from localStorage immediately ──
+let localAcc  = loadCache('cashonic_acc',  {...DEFAULT_ACCOUNTS});
+let localU    = loadCache('cashonic_udhari', []);
+let localTx   = loadCache('cashonic_tx',   []);
 
 const fmt=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
 const fmtShort=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+(a>=1000?(a/1000).toFixed(1)+'k':a.toFixed(0)); };
-const syncDot=s=>{ document.getElementById('sync-dot').className='sync-dot '+s; };
+const syncDot=s=>{ if(navigator.onLine) document.getElementById('sync-dot').className='sync-dot '+s; };
 const setErr=m=>{ document.getElementById('login-err').textContent=m; };
 
 function render(){
   ['fam','cash','bank','emergency','invest'].forEach(k=>{
     const el=document.getElementById('amt-'+k);
+    if(!el) return;
     el.textContent=fmt(localAcc[k]||0);
     el.classList.toggle('negative',(localAcc[k]||0)<0);
   });
@@ -916,46 +945,57 @@ function initListeners(uid){
   accountsRef=ref(db,`users/${uid}/accounts`);
   udhariRef=ref(db,`users/${uid}/udhari`);
   txRef=ref(db,`users/${uid}/transactions`);
-  onValue(accountsRef,s=>{
-    localAcc=s.val()||{...DEFAULT_ACCOUNTS};
-    // Cache to localStorage for offline use
-    try { localStorage.setItem('cashonic_acc', JSON.stringify(localAcc)); } catch(e){}
-    syncDot('synced'); render();
-  });
-  onValue(udhariRef,s=>{
-    const v=s.val();
-    localU=v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];
-    try { localStorage.setItem('cashonic_udhari', JSON.stringify(localU)); } catch(e){}
+
+  // Firebase Realtime Database already handles offline caching internally when
+  // goOffline/goOnline isn't explicitly called. onValue fires from local cache
+  // when offline and re-fires from server when connection restores.
+  onValue(accountsRef, s => {
+    localAcc = s.val() || {...DEFAULT_ACCOUNTS};
+    saveCache('cashonic_acc', localAcc);
+    syncDot('synced');
     render();
   });
-  onValue(txRef,s=>{
-    const v=s.val();
-    localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];
-    try { localStorage.setItem('cashonic_tx', JSON.stringify(localTx)); } catch(e){}
+  onValue(udhariRef, s => {
+    const v = s.val();
+    localU = v ? Object.entries(v).map(([k,u])=>({...u,_key:k})) : [];
+    saveCache('cashonic_udhari', localU);
+    render();
+  });
+  onValue(txRef, s => {
+    const v = s.val();
+    localTx = v ? Object.entries(v).map(([k,t])=>({...t,_key:k})) : [];
+    saveCache('cashonic_tx', localTx);
     render();
   });
 }
 
-onAuthStateChanged(auth,user=>{
-  clearTimeout(window._fbTimeout); window._stopLoading();
+onAuthStateChanged(auth, user => {
+  clearTimeout(window._fbTimeout);
+  window._stopLoading();
   document.getElementById('loading-screen').style.display='none';
   if(user){
-    cu=user;
+    cu = user;
     document.getElementById('app-screen').style.display='flex';
     document.getElementById('app-screen').style.flexDirection='column';
     document.getElementById('login-screen').style.display='none';
-    onValue(ref(db,`users/${user.uid}/accounts`),async s=>{
+
+    // ── KEY FIX: Render from localStorage IMMEDIATELY before Firebase responds ──
+    render();
+
+    // Initialize Firebase defaults for new users (only if no data exists)
+    onValue(ref(db,`users/${user.uid}/accounts`), async s => {
       if(!s.exists()){
-        await set(ref(db,`users/${user.uid}/accounts`),DEFAULT_ACCOUNTS);
-        await set(ref(db,`users/${user.uid}/udhari`),DEFAULT_UDHARI.reduce((a,u,i)=>({...a,['u'+i]:u}),{}));
+        await set(ref(db,`users/${user.uid}/accounts`), DEFAULT_ACCOUNTS);
+        await set(ref(db,`users/${user.uid}/udhari`), DEFAULT_UDHARI.reduce((a,u,i)=>({...a,['u'+i]:u}),{}));
       }
     },{onlyOnce:true});
+
     initListeners(user.uid);
-    // Show PIN screen after login
     window.initPin();
+    updateOnlineStatus();
   } else {
-    cu=null;
-    appUnlocked=false;
+    cu = null;
+    appUnlocked = false;
     document.getElementById('login-screen').style.display='flex';
     document.getElementById('app-screen').style.display='none';
     document.getElementById('pin-screen').classList.remove('show');
@@ -997,7 +1037,15 @@ window.doForgot=async()=>{
 window.doSignOut=async()=>{ await fbSignOut(auth); toast('Signed out'); };
 window.fbSignOutFn=async()=>{ await fbSignOut(auth); };
 
-window._dU=async key=>{ await remove(ref(db,`users/${cu.uid}/udhari/${key}`)); toast('Entry removed'); };
+window._dU=async key=>{
+  await remove(ref(db,`users/${cu.uid}/udhari/${key}`));
+  // Optimistic local update
+  localU = localU.filter(u => u._key !== key);
+  saveCache('cashonic_udhari', localU);
+  render();
+  toast('Entry removed');
+};
+
 window._dT=async(key,type,account,toAccount,amount)=>{
   syncDot('syncing');
   const upd={};
@@ -1009,18 +1057,38 @@ window._dT=async(key,type,account,toAccount,amount)=>{
     upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)+amount;
     if(toAccount)upd[`users/${cu.uid}/accounts/${toAccount}`]=(a[toAccount]||0)-amount;
   }
-  await update(ref(db),upd); toast('Transaction removed');
+  // Optimistic local update
+  localTx = localTx.filter(t => t._key !== key);
+  if(type==='expense') localAcc[account]=(a[account]||0)+amount;
+  else if(type==='income') localAcc[account]=(a[account]||0)-amount;
+  else if(type==='transfer'){
+    localAcc[account]=(a[account]||0)+amount;
+    if(toAccount) localAcc[toAccount]=(a[toAccount]||0)-amount;
+  }
+  saveCache('cashonic_acc', localAcc);
+  saveCache('cashonic_tx', localTx);
+  render();
+  await update(ref(db),upd);
+  toast('Transaction removed');
 };
+
 window.addUdhari=async()=>{
   const name=document.getElementById('u-name').value.trim();
   const amount=parseFloat(document.getElementById('u-amt').value);
   const type=document.getElementById('u-type').value;
   if(!name||!amount||amount<=0){toast('Enter name and amount');return;}
-  await push(udhariRef,{name,amount,type});
+  // Optimistic local update
+  const tempKey = '_tmp_' + Date.now();
+  localU.push({name, amount, type, _key: tempKey});
+  saveCache('cashonic_udhari', localU);
+  render();
   document.getElementById('u-name').value='';
   document.getElementById('u-amt').value='';
   toast('Udhari entry added ✓');
+  // Persist to Firebase (will replace temp entry via onValue listener)
+  await push(udhariRef,{name,amount,type});
 };
+
 window.addTransaction=async()=>{
   const type=document.getElementById('f-type').value;
   const account=document.getElementById('f-account').value;
@@ -1032,25 +1100,46 @@ window.addTransaction=async()=>{
   syncDot('syncing');
   const now=new Date();
   const date=now.toLocaleDateString('en-IN',{day:'2-digit',month:'short'})+' '+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
-  const upd={};
-  const txKey=push(txRef).key;
-  upd[`users/${cu.uid}/transactions/${txKey}`]={type,account,toAccount:type==='transfer'?toAcc:null,desc,amount,date};
-  const a=localAcc;
-  if(type==='expense') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)-amount;
-  else if(type==='income') upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)+amount;
+
+  // ── Optimistic local update — UI responds INSTANTLY ──
+  const tempKey = '_tmp_' + Date.now();
+  const newTx = {type, account, toAccount: type==='transfer'?toAcc:null, desc, amount, date, _key: tempKey};
+  localTx.push(newTx);
+  if(type==='expense') localAcc[account]=(localAcc[account]||0)-amount;
+  else if(type==='income') localAcc[account]=(localAcc[account]||0)+amount;
   else if(type==='transfer'){
-    upd[`users/${cu.uid}/accounts/${account}`]=(a[account]||0)-amount;
-    upd[`users/${cu.uid}/accounts/${toAcc}`]=(a[toAcc]||0)+amount;
+    localAcc[account]=(localAcc[account]||0)-amount;
+    localAcc[toAcc]=(localAcc[toAcc]||0)+amount;
   }
-  await update(ref(db),upd);
+  saveCache('cashonic_acc', localAcc);
+  saveCache('cashonic_tx', localTx);
+  render();
+
   document.getElementById('f-desc').value='';
   document.getElementById('f-amt').value='';
   toast('Recorded ✓');
   switchPage('home');
+
+  // Persist to Firebase (onValue will reconcile with real keys)
+  const upd={};
+  const txKey=push(txRef).key;
+  upd[`users/${cu.uid}/transactions/${txKey}`]={type, account, toAccount:type==='transfer'?toAcc:null, desc, amount, date};
+  if(type==='expense') upd[`users/${cu.uid}/accounts/${account}`]=localAcc[account];
+  else if(type==='income') upd[`users/${cu.uid}/accounts/${account}`]=localAcc[account];
+  else if(type==='transfer'){
+    upd[`users/${cu.uid}/accounts/${account}`]=localAcc[account];
+    upd[`users/${cu.uid}/accounts/${toAcc}`]=localAcc[toAcc];
+  }
+  await update(ref(db),upd);
 };
+
 window.clearHistory=async()=>{
   if(!confirm('Clear all history? Balances stay the same.'))return;
-  await set(txRef,null); toast('History cleared');
+  localTx = [];
+  saveCache('cashonic_tx', []);
+  renderTx();
+  await set(txRef,null);
+  toast('History cleared');
 };
 window.onTypeChange=()=>{
   document.getElementById('to-field').style.display=document.getElementById('f-type').value==='transfer'?'flex':'none';
