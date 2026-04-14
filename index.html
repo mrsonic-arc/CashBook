@@ -224,7 +224,9 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 .pin-btn.gold { background:#c8a84b; border-color:#c8a84b; color:#000; }
 .pin-btn.del { background:none; border:none; font-size:20px; }
 .pin-btn-sub { font-size:8px; color:var(--text3); letter-spacing:0.08em; font-weight:400; }
-.pin-forgot { margin-top:24px; font-size:12px; color:var(--text3); cursor:pointer; text-decoration:underline; }
+.pin-fingerprint { width:58px; height:58px; margin-top:18px; background:var(--surface2); border:1px solid var(--border2); border-radius:50%; font-size:28px; display:none; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; }
+.pin-fingerprint:active { background:var(--gold-bg); border-color:var(--gold); transform:scale(0.93); }
+.pin-forgot { margin-top:20px; font-size:12px; color:var(--text3); cursor:pointer; text-decoration:underline; }
 
 /* ── TOAST ── */
 .toast { position:fixed; bottom:calc(var(--tab-h) + 12px); left:50%; transform:translateX(-50%) translateY(20px); background:var(--surface2); border:1px solid var(--border2); color:var(--text); padding:10px 22px; border-radius:30px; font-size:13px; opacity:0; transition:all 0.3s; z-index:999; white-space:nowrap; }
@@ -279,6 +281,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
     <button class="pin-btn" onclick="pinPress('0')">0</button>
     <button class="pin-btn del" onclick="pinDel()">&#x232B;</button>
   </div>
+  <button class="pin-fingerprint" id="pin-fingerprint-btn" onclick="tryFingerprint()">&#x1F4F1;</button>
   <div class="pin-forgot" id="pin-forgot-btn" onclick="pinForgot()" style="display:none;">Forgot PIN? Sign out and log in again</div>
 </div>
 
@@ -563,11 +566,9 @@ window.switchPage = id => {
 
 // ── PIN LOCK SYSTEM ──
 const PIN_KEY = 'cashonic_pin';
-const PIN_TIMEOUT = 5 * 60 * 1000; // 5 minutes
 let pinBuffer = '';
 let pinMode = 'enter'; // 'setup' | 'enter' | 'confirm'
 let pinSetupFirst = '';
-let inactivityTimer = null;
 let appUnlocked = false;
 
 function getStoredPin() { try { return localStorage.getItem(PIN_KEY); } catch(e){ return null; } }
@@ -581,21 +582,26 @@ function showPinScreen(mode) {
   updatePinDots();
   document.getElementById('pin-err').textContent = '';
   document.getElementById('pin-screen').classList.add('show');
+  const fpBtn = document.getElementById('pin-fingerprint-btn');
+  const forgotBtn = document.getElementById('pin-forgot-btn');
   if (mode === 'setup') {
     document.getElementById('pin-label').textContent = 'Set a new PIN';
     document.getElementById('pin-subtitle').textContent = 'Choose a 4-digit PIN to protect your data';
-    document.getElementById('pin-forgot-btn').style.display = 'none';
+    fpBtn.style.display = 'none';
+    forgotBtn.style.display = 'none';
   } else {
     document.getElementById('pin-label').textContent = 'Enter PIN';
     document.getElementById('pin-subtitle').textContent = 'Personal Finance Tracker';
-    document.getElementById('pin-forgot-btn').style.display = 'block';
+    fpBtn.style.display = 'flex';
+    forgotBtn.style.display = 'block';
+    // Auto-try fingerprint when entering PIN
+    setTimeout(tryFingerprint, 400);
   }
 }
 
 function hidePinScreen() {
   document.getElementById('pin-screen').classList.remove('show');
   appUnlocked = true;
-  resetInactivity();
 }
 
 function updatePinDots() {
@@ -613,18 +619,35 @@ function pinShakeError(msg) {
     dot.classList.remove('filled');
     dot.classList.add('error');
   }
-  setTimeout(() => {
-    pinBuffer = '';
-    updatePinDots();
-  }, 600);
+  setTimeout(() => { pinBuffer = ''; updatePinDots(); }, 600);
 }
+
+// Fingerprint / biometric auth
+window.tryFingerprint = async () => {
+  if (!window.PublicKeyCredential) return; // not supported
+  try {
+    const result = await navigator.credentials.get({
+      publicKey: {
+        challenge: new Uint8Array(32),
+        timeout: 30000,
+        userVerification: 'required',
+        rpId: window.location.hostname
+      }
+    });
+    if (result) hidePinScreen();
+  } catch(e) {
+    // Biometric failed or cancelled — user can enter PIN manually
+    if (e.name !== 'NotAllowedError') {
+      document.getElementById('pin-err').textContent = 'Biometric failed. Enter PIN.';
+    }
+  }
+};
 
 window.pinPress = digit => {
   if (pinBuffer.length >= 4) return;
   pinBuffer += digit;
   updatePinDots();
   document.getElementById('pin-err').textContent = '';
-
   if (pinBuffer.length === 4) {
     setTimeout(() => {
       if (pinMode === 'setup') {
@@ -643,12 +666,9 @@ window.pinPress = digit => {
           pinShakeError('PINs do not match. Try again.');
           pinMode = 'setup';
           pinSetupFirst = '';
-          setTimeout(() => {
-            document.getElementById('pin-label').textContent = 'Set a new PIN';
-          }, 700);
+          setTimeout(() => { document.getElementById('pin-label').textContent = 'Set a new PIN'; }, 700);
         }
       } else {
-        // enter mode
         const stored = getStoredPin();
         if (pinBuffer === stored) {
           hidePinScreen();
@@ -672,26 +692,19 @@ window.pinForgot = () => {
   if (confirm('This will sign you out. You can log back in and set a new PIN. Continue?')) {
     clearPin();
     hidePinScreen();
-    if (typeof fbSignOutFn === 'function') fbSignOutFn();
+    if (typeof window.fbSignOutFn === 'function') window.fbSignOutFn();
   }
 };
 
-// Inactivity — lock after 5 minutes
-function resetInactivity() {
-  clearTimeout(inactivityTimer);
-  if (!appUnlocked) return;
-  inactivityTimer = setTimeout(() => {
+// Always lock when app comes to foreground
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && appUnlocked) {
     const stored = getStoredPin();
-    if (stored && appUnlocked) {
+    if (stored) {
       appUnlocked = false;
       showPinScreen('enter');
     }
-  }, PIN_TIMEOUT);
-}
-
-// Reset timer on any user interaction
-['touchstart','touchend','click','keydown'].forEach(ev => {
-  document.addEventListener(ev, resetInactivity, { passive: true });
+  }
 });
 
 // Called after Firebase login confirmed
@@ -700,7 +713,6 @@ window.initPin = () => {
   if (stored) {
     showPinScreen('enter');
   } else {
-    // No PIN set yet — ask user to set one
     showPinScreen('setup');
   }
 };
