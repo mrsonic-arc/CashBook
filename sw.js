@@ -1,67 +1,42 @@
-const CACHE_VERSION = 'cashonic-v1';
-
-// Only include files that actually exist in your project
-const STATIC_ASSETS = [
+const CACHE = 'mrsonic-v1';
+const ASSETS = [
   '/',
   '/index.html',
-  'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap',
+  '/manifest.json',
+  'https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Mono:wght@300;400;500&display=swap'
 ];
 
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_VERSION).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    }).then(() => self.skipWaiting())
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).catch(() => {})
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => {
-      return Promise.all(
-        keys.filter(key => key !== CACHE_VERSION).map(key => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    )
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', event => {
-  const request = event.request;
+self.addEventListener('fetch', e => {
+  // Only cache GET requests, skip Firebase/Google API calls
+  if (e.request.method !== 'GET') return;
+  const url = e.request.url;
+  if (url.includes('firebaseio.com') || url.includes('googleapis.com/identitytoolkit') || url.includes('securetoken')) return;
 
-  // Special handling for Firebase SDKs to ensure they are cached
-  if (request.url.includes('gstatic.com/firebasejs')) {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        return cached || fetch(request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(request, clone));
-          return response;
-        });
-      })
-    );
-    return;
-  }
-
-  // Network First for HTML, Cache First for others
-  if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match('/index.html'))
-    );
-  } else {
-    event.respondWith(
-      caches.match(request).then(cached => {
-        return cached || fetch(request).then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then(cache => cache.put(request, clone));
-          return response;
-        });
-      })
-    );
-  }
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      const network = fetch(e.request).then(res => {
+        if (res && res.status === 200 && e.request.url.startsWith(self.location.origin)) {
+          caches.open(CACHE).then(c => c.put(e.request, res.clone()));
+        }
+        return res;
+      }).catch(() => cached);
+      return cached || network;
+    })
+  );
 });
