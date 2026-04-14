@@ -763,22 +763,29 @@ const app = initializeApp({
 });
 const auth=getAuth(app), db=getDatabase(app);
 
-// ── OFFLINE SUPPORT ──
-// Firebase Realtime Database caches data locally automatically.
-// goOffline/goOnline tells Firebase to pause/resume sync based on connectivity.
-function handleNetworkChange() {
-  if (navigator.onLine) {
-    goOnline(db);
-    syncDot('syncing');
-    toast('Back online — syncing... ☁️');
+// -- OFFLINE SUPPORT --
+// Use Firebase's .info/connected -- ground truth sync status (better than navigator.onLine)
+const connectedRef = ref(db, '.info/connected');
+onValue(connectedRef, snap => {
+  const el = document.getElementById('syncDot');
+  if (snap.val() === true) {
+    if (el) el.style.backgroundColor = '#4CAF50'; // Green: synced
+    syncDot('synced');
   } else {
-    goOffline(db);
+    if (el) el.style.backgroundColor = '#F44336'; // Red: offline
     syncDot('offline');
-    toast('Offline mode — data saved locally 📴');
   }
-}
-window.addEventListener('online', handleNetworkChange);
-window.addEventListener('offline', handleNetworkChange);
+});
+
+// goOnline/goOffline on network events -- Firebase queues writes while offline
+window.addEventListener('online', () => {
+  goOnline(db);
+  toast('Back online -- syncing... ');
+});
+window.addEventListener('offline', () => {
+  goOffline(db);
+  toast('Offline mode -- data saved locally');
+});
 
 const DEFAULT_ACCOUNTS={fam:138,cash:50,bank:2152.75,emergency:600,invest:3517.27};
 const DEFAULT_UDHARI=[
@@ -1077,5 +1084,9 @@ window.toast=msg=>{
   clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2500);
 };
 </script>
+
+<!-- Fixed connection status dot — controlled by .info/connected Firebase listener -->
+<div id="syncDot" style="width:12px;height:12px;border-radius:50%;position:fixed;top:10px;right:10px;z-index:9999;background-color:#F44336;border:2px solid white;transition:background-color 0.4s ease;"></div>
+
 </body>
 </html>
