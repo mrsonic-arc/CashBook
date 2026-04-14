@@ -522,22 +522,7 @@ body { background:var(--bg); color:var(--text); font-family:'Syne',sans-serif; m
 
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(reg => {
-      // Check for SW updates every 60 seconds
-      setInterval(() => reg.update(), 60000);
-      // When a new SW is waiting, reload to activate it
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New version available — notify user
-            if (window.toast) toast('App updated! Restart to get new version ✨');
-          }
-        });
-      });
-    }).catch(() => {});
-  });
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(()=>{}));
 }
 
 // Loading animation
@@ -746,7 +731,7 @@ window.setFilter = (f,btn) => {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut as fbSignOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getDatabase, ref, onValue, set, push, remove, update, goOffline, goOnline }
+import { getDatabase, ref, onValue, set, push, remove, update }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 window.addEventListener('error',()=>{ clearTimeout(window._fbTimeout); document.getElementById('loading-retry').style.display='block'; });
@@ -763,30 +748,6 @@ const app = initializeApp({
 });
 const auth=getAuth(app), db=getDatabase(app);
 
-// -- OFFLINE SUPPORT --
-// Use Firebase's .info/connected -- ground truth sync status (better than navigator.onLine)
-const connectedRef = ref(db, '.info/connected');
-onValue(connectedRef, snap => {
-  const el = document.getElementById('syncDot');
-  if (snap.val() === true) {
-    if (el) el.style.backgroundColor = '#4CAF50'; // Green: synced
-    syncDot('synced');
-  } else {
-    if (el) el.style.backgroundColor = '#F44336'; // Red: offline
-    syncDot('offline');
-  }
-});
-
-// goOnline/goOffline on network events -- Firebase queues writes while offline
-window.addEventListener('online', () => {
-  goOnline(db);
-  toast('Back online -- syncing... ');
-});
-window.addEventListener('offline', () => {
-  goOffline(db);
-  toast('Offline mode -- data saved locally');
-});
-
 const DEFAULT_ACCOUNTS={fam:138,cash:50,bank:2152.75,emergency:600,invest:3517.27};
 const DEFAULT_UDHARI=[
   {name:'Shivam',amount:1000,type:'given'},{name:'Ammi (keep)',amount:600,type:'given'},
@@ -801,12 +762,7 @@ let localAcc={...DEFAULT_ACCOUNTS}, localU=[], localTx=[];
 
 const fmt=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
 const fmtShort=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+(a>=1000?(a/1000).toFixed(1)+'k':a.toFixed(0)); };
-const syncDot=s=>{
-  const el=document.getElementById('sync-dot');
-  el.className='sync-dot '+s;
-  if(s==='offline') el.style.background='var(--red)';
-  else el.style.background='';
-};
+const syncDot=s=>{ document.getElementById('sync-dot').className='sync-dot '+s; };
 const setErr=m=>{ document.getElementById('login-err').textContent=m; };
 
 function render(){
@@ -1084,9 +1040,5 @@ window.toast=msg=>{
   clearTimeout(_tt); _tt=setTimeout(()=>el.classList.remove('show'),2500);
 };
 </script>
-
-<!-- Fixed connection status dot — controlled by .info/connected Firebase listener -->
-<div id="syncDot" style="width:12px;height:12px;border-radius:50%;position:fixed;top:10px;right:10px;z-index:9999;background-color:#F44336;border:2px solid white;transition:background-color 0.4s ease;"></div>
-
 </body>
 </html>
