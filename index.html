@@ -758,7 +758,18 @@ const ACC_LABELS={fam:'FamPay',cash:'Cash in Hand',bank:'Bank (CBI)',emergency:'
 const ACC_ICONS={fam:'💳',cash:'💵',bank:'🏦',emergency:'🧯',invest:'⛏️'};
 
 let cu=null, accountsRef, udhariRef, txRef;
-let localAcc={...DEFAULT_ACCOUNTS}, localU=[], localTx=[];
+// Load cached balances from localStorage so offline calcs use latest known values
+function loadCachedAcc() {
+  try {
+    const cached = localStorage.getItem('cashonic_acc');
+    return cached ? JSON.parse(cached) : {...DEFAULT_ACCOUNTS};
+  } catch(e) { return {...DEFAULT_ACCOUNTS}; }
+}
+let localAcc=loadCachedAcc(), localU=[], localTx=[];
+function loadCachedTx() { try { const c=localStorage.getItem('cashonic_tx'); return c?JSON.parse(c):[]; } catch(e){return [];} }
+function loadCachedUdhari() { try { const c=localStorage.getItem('cashonic_udhari'); return c?JSON.parse(c):[]; } catch(e){return [];} }
+localTx = loadCachedTx();
+localU = loadCachedUdhari();
 
 const fmt=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+a.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
 const fmtShort=n=>{ const a=Math.abs(n); return (n<0?'-':'')+'₹'+(a>=1000?(a/1000).toFixed(1)+'k':a.toFixed(0)); };
@@ -905,9 +916,24 @@ function initListeners(uid){
   accountsRef=ref(db,`users/${uid}/accounts`);
   udhariRef=ref(db,`users/${uid}/udhari`);
   txRef=ref(db,`users/${uid}/transactions`);
-  onValue(accountsRef,s=>{ localAcc=s.val()||{...DEFAULT_ACCOUNTS}; syncDot('synced'); render(); });
-  onValue(udhariRef,s=>{ const v=s.val(); localU=v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];render();});
-  onValue(txRef,s=>{ const v=s.val(); localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];render();});
+  onValue(accountsRef,s=>{
+    localAcc=s.val()||{...DEFAULT_ACCOUNTS};
+    // Cache to localStorage for offline use
+    try { localStorage.setItem('cashonic_acc', JSON.stringify(localAcc)); } catch(e){}
+    syncDot('synced'); render();
+  });
+  onValue(udhariRef,s=>{
+    const v=s.val();
+    localU=v?Object.entries(v).map(([k,u])=>({...u,_key:k})):[];
+    try { localStorage.setItem('cashonic_udhari', JSON.stringify(localU)); } catch(e){}
+    render();
+  });
+  onValue(txRef,s=>{
+    const v=s.val();
+    localTx=v?Object.entries(v).map(([k,t])=>({...t,_key:k})):[];
+    try { localStorage.setItem('cashonic_tx', JSON.stringify(localTx)); } catch(e){}
+    render();
+  });
 }
 
 onAuthStateChanged(auth,user=>{
